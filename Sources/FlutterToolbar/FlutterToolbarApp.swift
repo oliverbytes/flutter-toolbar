@@ -40,14 +40,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
         window.standardWindowButton(.zoomButton)?.isHidden = true
         
-        window.isOpaque = true
+        window.isOpaque = false
         window.hasShadow = false
-        
-        if let contentView = window.contentView {
-            contentView.wantsLayer = true
-            contentView.layer?.cornerRadius = 16
-            contentView.layer?.masksToBounds = true
-        }
+        window.backgroundColor = .clear
         
         window.delegate = self
     }
