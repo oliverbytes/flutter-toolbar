@@ -8,8 +8,9 @@ struct ControlButtons: View {
             if viewModel.appState == .running || viewModel.appState == .starting || viewModel.appState == .stopping {
                 Button(action: { viewModel.stopApp() }) {
                     Image(systemName: "stop.fill")
+                        .foregroundColor(.red)
                 }
-                .buttonStyle(StopButtonStyle())
+                .buttonStyle(PlainButtonStyle())
                 .disabled(viewModel.appState == .stopping)
                 .help(viewModel.appState == .stopping ? "Stopping..." : "Stop App")
                 .transition(.opacity.combined(with: .scale))
@@ -38,18 +39,6 @@ struct ControlButtons: View {
             .help("Hot Restart")
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.appState)
-    }
-}
-
-struct StopButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 14, weight: .medium))
-            .frame(width: 32, height: 32)
-            .foregroundColor(.white)
-            .background(configuration.isPressed ? Color.red.opacity(0.8) : Color.red)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .contentShape(Rectangle())
     }
 }
 
