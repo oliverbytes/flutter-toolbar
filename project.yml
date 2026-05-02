@@ -1,0 +1,39 @@
+name: FlutterToolbar
+targets:
+  FlutterToolbar:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - Sources/FlutterToolbar
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.fluttervibe.FlutterToolbar
+      PRODUCT_NAME: FlutterToolbar
+      INFOPLIST_FILE: Sources/FlutterToolbar/Info.plist
+      MARKETING_VERSION: "1.0.0"
+      CURRENT_PROJECT_VERSION: "1"
+      SWIFT_VERSION: "5.9"
+      ENABLE_STRICT_CONCURRENCY: "YES"
+      ASSETCATALOG_COMPILER_APPICON_NAME: "AppIcon"
+    entitlements:
+      path: Sources/FlutterToolbar/FlutterToolbar.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.files.user-selected-read-write: true
+    scheme:
+      testTargets: []
+      run:
+        config: Debug
+      archive:
+        config: Release
+      profile:
+        config: Release
+      analyze:
+        config: Debug
+settings:
+  configs:
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+    Release:
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
