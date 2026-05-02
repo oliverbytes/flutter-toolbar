@@ -1,0 +1,16 @@
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/FlutterToolbarApp.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Models/AppState.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Models/DaemonMessage.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Models/Device.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Models/LaunchConfig.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Models/LogEntry.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Models/RunnerMessage.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Services/FlutterDaemon.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Services/FlutterRunner.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Services/ToolbarViewModel.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Services/UserDefaultsStore.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Views/ContentView.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Views/ControlButtons.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Views/DevicePicker.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Views/LaunchConfigPicker.swift
+/Users/nemoryoliver/Desktop/Projects/FlutterVibe/flutter-toolbar/Sources/FlutterToolbar/Views/ProjectButton.swift
