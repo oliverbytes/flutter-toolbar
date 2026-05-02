@@ -37,6 +37,7 @@ struct ContentView: View {
             LogPanel(viewModel: viewModel)
         }
         .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+        .ignoresSafeArea(.container, edges: .top)
     }
 }
 
@@ -130,7 +131,7 @@ struct LogPanel: View {
             .frame(maxWidth: .infinity, minHeight: panelHeight, maxHeight: panelHeight, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(.thickMaterial)
+                    .fill(.regularMaterial)
             )
             .animation(.easeInOut(duration: 0.2), value: viewModel.logLines.count)
             .animation(.easeInOut(duration: 0.2), value: isExpanded)

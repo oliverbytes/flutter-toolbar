@@ -33,6 +33,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.isMovableByWindowBackground = true
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
+        window.titlebarSeparatorStyle = .none
+        window.styleMask.insert(.fullSizeContentView)
         
         window.standardWindowButton(.closeButton)?.isHidden = true
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
