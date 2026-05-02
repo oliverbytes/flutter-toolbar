@@ -6,6 +6,15 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 4) {
             HStack(spacing: 8) {
+                Button(action: { NSApp.terminate(nil) }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                }
+                .buttonStyle(PlainButtonStyle())
+                .foregroundColor(.secondary)
+                .frame(width: 24, height: 24)
+                .help("Quit")
+
                 ProjectButton(viewModel: viewModel)
                     .frame(minWidth: 140, maxWidth: 240)
 
