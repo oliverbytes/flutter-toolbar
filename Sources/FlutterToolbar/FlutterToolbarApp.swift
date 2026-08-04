@@ -10,7 +10,8 @@ struct FlutterToolbarApp: App {
             ContentView()
         }
         .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 560, height: 150)
         .defaultPosition(.center)
     }
 }
@@ -43,6 +44,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.isOpaque = false
         window.hasShadow = false
         window.backgroundColor = .clear
+        window.minSize = NSSize(width: 480, height: 100)
+        window.setFrameAutosaveName("FlutterToolbar.mainWindow")
         
         window.delegate = self
     }
