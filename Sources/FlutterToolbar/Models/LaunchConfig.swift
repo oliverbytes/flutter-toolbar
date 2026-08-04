@@ -41,7 +41,9 @@ struct LaunchConfig: Identifiable, Hashable {
 
     static func parse(from projectPath: String) -> [LaunchConfig] {
         let launchJsonPath = (projectPath as NSString).appendingPathComponent(".vscode/launch.json")
-        guard let data = FileManager.default.contents(atPath: launchJsonPath),
+        guard let fileData = FileManager.default.contents(atPath: launchJsonPath),
+              let fileContents = String(data: fileData, encoding: .utf8),
+              let data = normalizedJSONData(from: fileContents),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let configurations = json["configurations"] as? [[String: Any]] else {
             return []
@@ -63,6 +65,113 @@ struct LaunchConfig: Identifiable, Hashable {
                 env: config["env"] as? [String: String]
             )
         }
+    }
+
+    /// VS Code launch files are JSONC: comments and trailing commas are valid.
+    /// `JSONSerialization` accepts only strict JSON, so normalize those features first.
+    private static func normalizedJSONData(from contents: String) -> Data? {
+        var uncommented = ""
+        var index = contents.startIndex
+        var isInString = false
+        var isEscaped = false
+        var isLineComment = false
+        var isBlockComment = false
+
+        while index < contents.endIndex {
+            let character = contents[index]
+            let nextIndex = contents.index(after: index)
+            let nextCharacter = nextIndex < contents.endIndex ? contents[nextIndex] : nil
+
+            if isLineComment {
+                if character == "\n" {
+                    isLineComment = false
+                    uncommented.append(character)
+                }
+                index = nextIndex
+                continue
+            }
+
+            if isBlockComment {
+                if character == "*", nextCharacter == "/" {
+                    isBlockComment = false
+                    index = contents.index(after: nextIndex)
+                } else {
+                    if character == "\n" {
+                        uncommented.append(character)
+                    }
+                    index = nextIndex
+                }
+                continue
+            }
+
+            if isInString {
+                uncommented.append(character)
+                if isEscaped {
+                    isEscaped = false
+                } else if character == "\\" {
+                    isEscaped = true
+                } else if character == "\"" {
+                    isInString = false
+                }
+                index = nextIndex
+                continue
+            }
+
+            if character == "\"" {
+                isInString = true
+                uncommented.append(character)
+            } else if character == "/", nextCharacter == "/" {
+                isLineComment = true
+                index = contents.index(after: nextIndex)
+                continue
+            } else if character == "/", nextCharacter == "*" {
+                isBlockComment = true
+                index = contents.index(after: nextIndex)
+                continue
+            } else {
+                uncommented.append(character)
+            }
+
+            index = nextIndex
+        }
+
+        var normalized = ""
+        index = uncommented.startIndex
+        isInString = false
+        isEscaped = false
+
+        while index < uncommented.endIndex {
+            let character = uncommented[index]
+            if isInString {
+                normalized.append(character)
+                if isEscaped {
+                    isEscaped = false
+                } else if character == "\\" {
+                    isEscaped = true
+                } else if character == "\"" {
+                    isInString = false
+                }
+            } else if character == "\"" {
+                isInString = true
+                normalized.append(character)
+            } else if character == "," {
+                var lookAhead = uncommented.index(after: index)
+                while lookAhead < uncommented.endIndex,
+                      uncommented[lookAhead].isWhitespace {
+                    lookAhead = uncommented.index(after: lookAhead)
+                }
+                if lookAhead < uncommented.endIndex,
+                   uncommented[lookAhead] != "}",
+                   uncommented[lookAhead] != "]" {
+                    normalized.append(character)
+                }
+            } else {
+                normalized.append(character)
+            }
+            index = uncommented.index(after: index)
+        }
+
+        return normalized.data(using: .utf8)
     }
 
     static func defaultConfigs() -> [LaunchConfig] {
