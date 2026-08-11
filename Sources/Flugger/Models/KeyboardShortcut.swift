@@ -14,7 +14,6 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
     case exportVisibleOutput
     case clearConsole
     case toggleTerminal
-    case showConsole
     case showSourceControl
     case stageAllChanges
     case commitStagedChanges
@@ -233,8 +232,6 @@ extension WorkbenchAction {
             WorkbenchShortcut(key: .k, modifiers: [.command])
         case .toggleTerminal:
             WorkbenchShortcut(key: .graveAccent, modifiers: [.control])
-        case .showConsole:
-            WorkbenchShortcut(key: .one, modifiers: [.command])
         case .showSourceControl:
             WorkbenchShortcut(key: .two, modifiers: [.command])
         case .stageAllChanges:
