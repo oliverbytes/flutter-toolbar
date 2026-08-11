@@ -1,27 +1,30 @@
-name: FlutterToolbar
+name: Flugger
 targets:
-  FlutterToolbar:
+  Flugger:
     type: application
     platform: macOS
-    deploymentTarget: "13.0"
+    deploymentTarget: "15.0"
     sources:
-      - Sources/FlutterToolbar
+      - path: Sources/Flugger
+        excludes:
+          - Design/AppIconMaster.png
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.fluttervibe.FlutterToolbar
-      PRODUCT_NAME: FlutterToolbar
-      INFOPLIST_FILE: Sources/FlutterToolbar/Info.plist
+      PRODUCT_BUNDLE_IDENTIFIER: com.fluttervibe.Flugger
+      PRODUCT_NAME: Flugger
+      INFOPLIST_FILE: Sources/Flugger/Info.plist
       MARKETING_VERSION: "1.0.0"
       CURRENT_PROJECT_VERSION: "1"
       SWIFT_VERSION: "5.9"
       ENABLE_STRICT_CONCURRENCY: "YES"
       ASSETCATALOG_COMPILER_APPICON_NAME: "AppIcon"
     entitlements:
-      path: Sources/FlutterToolbar/FlutterToolbar.entitlements
+      path: Sources/Flugger/Flugger.entitlements
       properties:
         com.apple.security.app-sandbox: false
         com.apple.security.files.user-selected-read-write: true
     scheme:
-      testTargets: []
+      testTargets:
+        - FluggerTests
       run:
         config: Debug
       archive:
@@ -30,6 +33,18 @@ targets:
         config: Release
       analyze:
         config: Debug
+  FluggerTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - Tests/FluggerTests
+    dependencies:
+      - target: Flugger
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+      SWIFT_VERSION: "5.9"
+      ENABLE_STRICT_CONCURRENCY: "YES"
 settings:
   configs:
     Debug:
