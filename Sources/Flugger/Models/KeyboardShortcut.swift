@@ -40,7 +40,6 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
         case .exportVisibleOutput: "Export Visible Output"
         case .clearConsole: "Clear Current Log"
         case .toggleTerminal: "Toggle Terminal"
-        case .showConsole: "Show Console"
         case .showSourceControl: "Show Source Control"
         case .stageAllChanges: "Stage All Changes"
         case .commitStagedChanges: "Commit Staged Changes"
