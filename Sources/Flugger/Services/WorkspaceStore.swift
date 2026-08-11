@@ -1,7 +1,7 @@
 import Foundation
 
 struct WorkspaceSnapshot: Codable, Equatable {
-    static let currentSchemaVersion = 1
+    static let currentSchemaVersion = 2
 
     var schemaVersion: Int = currentSchemaVersion
     var recentProjects: [RecentProject] = []
@@ -33,7 +33,9 @@ final class WorkspaceStore {
     func load() throws -> WorkspaceSnapshot {
         guard fileManager.fileExists(atPath: fileURL.path) else { return WorkspaceSnapshot() }
         let data = try Data(contentsOf: fileURL)
-        return try decoder.decode(WorkspaceSnapshot.self, from: data)
+        var snapshot = try decoder.decode(WorkspaceSnapshot.self, from: data)
+        snapshot.schemaVersion = WorkspaceSnapshot.currentSchemaVersion
+        return snapshot
     }
 
     @discardableResult

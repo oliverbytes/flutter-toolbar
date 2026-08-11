@@ -58,6 +58,14 @@ final class KeyboardShortcutStoreTests: XCTestCase {
         )
     }
 
+    func testTerminalShortcutUsesControlGraveAccent() {
+        XCTAssertEqual(
+            WorkbenchAction.toggleTerminal.defaultShortcut,
+            WorkbenchShortcut(key: .graveAccent, modifiers: [.control])
+        )
+        XCTAssertEqual(WorkbenchAction.toggleTerminal.defaultShortcut.displayName, "⌃`")
+    }
+
     func testAppFontSizeChangesAreClamped() {
         XCTAssertEqual(AppFontSizing.increased(AppFontSizing.maximumSize), AppFontSizing.maximumSize)
         XCTAssertEqual(AppFontSizing.decreased(AppFontSizing.minimumSize), AppFontSizing.minimumSize)
