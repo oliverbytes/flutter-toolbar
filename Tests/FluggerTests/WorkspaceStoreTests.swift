@@ -82,6 +82,59 @@ final class WorkspaceStoreTests: XCTestCase {
         XCTAssertEqual(loaded.recentProjects.map(\.path), ["/tmp/sample"])
     }
 
+    func testTerminalLayoutRoundTripsWithoutTerminalOutput() throws {
+        let store = WorkspaceStore(directoryURL: temporaryDirectory)
+        let firstTab = TerminalTabSnapshot(title: "Server")
+        let secondTab = TerminalTabSnapshot(title: "Tests")
+        let layout = TerminalWorkspaceSnapshot(
+            isVisible: true,
+            paneHeight: 312,
+            tabs: [firstTab, secondTab],
+            selectedTabID: secondTab.id
+        )
+        var snapshot = WorkspaceSnapshot(
+            recentProjects: [RecentProject(path: "/tmp/sample", terminalWorkspace: layout)]
+        )
+
+        try store.save(snapshot)
+        snapshot = try store.load()
+
+        XCTAssertEqual(snapshot.recentProjects.first?.terminalWorkspace, layout)
+        let persisted = try String(
+            contentsOf: temporaryDirectory.appendingPathComponent("workspace.json"),
+            encoding: .utf8
+        )
+        XCTAssertFalse(persisted.contains("scrollback"))
+        XCTAssertFalse(persisted.contains("environment"))
+    }
+
+    func testVersionOneWorkspaceMigratesWithoutTerminalMetadata() throws {
+        let legacyJSON = """
+        {
+          "recentProjects" : [
+            {
+              "displayName" : "Legacy",
+              "lastOpenedAt" : "2026-08-11T00:00:00Z",
+              "path" : "/tmp/legacy"
+            }
+          ],
+          "schemaVersion" : 1,
+          "sessions" : []
+        }
+        """
+        try legacyJSON.write(
+            to: temporaryDirectory.appendingPathComponent("workspace.json"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let loaded = try WorkspaceStore(directoryURL: temporaryDirectory).load()
+
+        XCTAssertEqual(loaded.schemaVersion, WorkspaceSnapshot.currentSchemaVersion)
+        XCTAssertEqual(loaded.recentProjects.first?.path, "/tmp/legacy")
+        XCTAssertNil(loaded.recentProjects.first?.terminalWorkspace)
+    }
+
     func testUpdatingProjectMetadataPreservesManualOrder() throws {
         let store = WorkspaceStore(directoryURL: temporaryDirectory)
         var snapshot = WorkspaceSnapshot()

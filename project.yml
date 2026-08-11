@@ -1,4 +1,8 @@
 name: Flugger
+packages:
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm.git
+    exactVersion: 1.11.2
 targets:
   Flugger:
     type: application
@@ -8,6 +12,8 @@ targets:
       - path: Sources/Flugger
         excludes:
           - Design/AppIconMaster.png
+    dependencies:
+      - package: SwiftTerm
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.fluttervibe.Flugger
       PRODUCT_NAME: Flugger

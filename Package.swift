@@ -12,9 +12,18 @@ let package = Package(
             targets: ["Flugger"]
         ),
     ],
+    dependencies: [
+        .package(
+            url: "https://github.com/migueldeicaza/SwiftTerm.git",
+            exact: "1.11.2"
+        ),
+    ],
     targets: [
         .executableTarget(
             name: "Flugger",
+            dependencies: [
+                .product(name: "SwiftTerm", package: "SwiftTerm"),
+            ],
             path: "Sources/Flugger",
             exclude: [
                 "Info.plist",
