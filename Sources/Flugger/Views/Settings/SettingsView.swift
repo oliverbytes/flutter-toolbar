@@ -101,6 +101,12 @@ private struct ShortcutSettingsView: View {
                 }
             }
 
+            Section("Source Control") {
+                ForEach(WorkbenchAction.sourceControlActions) { action in
+                    ShortcutRow(action: action, keyboardShortcuts: keyboardShortcuts)
+                }
+            }
+
             Section("Appearance") {
                 ForEach(WorkbenchAction.appearanceActions) { action in
                     ShortcutRow(action: action, keyboardShortcuts: keyboardShortcuts)

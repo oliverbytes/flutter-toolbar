@@ -13,6 +13,7 @@ struct LiveWorkspaceView: View {
             WorkbenchStatusBar(viewModel: viewModel)
         }
         .background(WorkbenchColor.background)
+        .accessibilityIdentifier("consoleWorkspace")
     }
 }
 

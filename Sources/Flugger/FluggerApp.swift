@@ -41,6 +41,7 @@ enum ThemeMode: String, CaseIterable {
 @main
 struct FluggerApp: App {
     @StateObject private var viewModel = WorkspaceViewModel()
+    @StateObject private var sourceControlViewModel = SourceControlViewModel()
     @StateObject private var keyboardShortcuts = KeyboardShortcutStore()
     @AppStorage(PreferenceKeys.themeMode) private var themeMode = ThemeMode.system.rawValue
     @AppStorage(PreferenceKeys.appFontSize) private var appFontSize = AppFontSizing.defaultSize
@@ -49,7 +50,7 @@ struct FluggerApp: App {
 
     var body: some Scene {
         WindowGroup("Flugger", id: "workspace") {
-            ContentView(viewModel: viewModel)
+            ContentView(viewModel: viewModel, sourceControlViewModel: sourceControlViewModel)
                 .frame(minWidth: 820, minHeight: 520)
                 .preferredColorScheme(selectedTheme.colorScheme)
                 .workbenchAppFontSize(appFontSize)
@@ -62,6 +63,7 @@ struct FluggerApp: App {
             SidebarCommands()
             WorkbenchCommands(
                 viewModel: viewModel,
+                sourceControlViewModel: sourceControlViewModel,
                 keyboardShortcuts: keyboardShortcuts,
                 appFontSize: $appFontSize
             )
@@ -77,6 +79,7 @@ struct FluggerApp: App {
 
 private struct WorkbenchCommands: Commands {
     @ObservedObject var viewModel: WorkspaceViewModel
+    @ObservedObject var sourceControlViewModel: SourceControlViewModel
     @ObservedObject var keyboardShortcuts: KeyboardShortcutStore
     @Binding var appFontSize: Double
 
@@ -146,6 +149,49 @@ private struct WorkbenchCommands: Commands {
             Button("Clear Console", systemImage: "trash", action: viewModel.clearLogs)
                 .workbenchShortcut(keyboardShortcuts.binding(for: .clearConsole))
                 .disabled(viewModel.logLines.isEmpty)
+        }
+
+        CommandMenu("Source Control") {
+            Button("Show Console", systemImage: "terminal") {
+                NotificationCenter.default.post(name: .showConsoleWorkspace, object: nil)
+            }
+            .workbenchShortcut(keyboardShortcuts.binding(for: .showConsole))
+
+            Button("Show Source Control", systemImage: "arrow.triangle.branch") {
+                NotificationCenter.default.post(name: .showSourceControlWorkspace, object: nil)
+            }
+            .workbenchShortcut(keyboardShortcuts.binding(for: .showSourceControl))
+
+            Divider()
+
+            Button("Stage All Changes", systemImage: "plus") {
+                sourceControlViewModel.stageAll()
+            }
+            .workbenchShortcut(keyboardShortcuts.binding(for: .stageAllChanges))
+            .disabled(!sourceControlViewModel.canStageAll)
+
+            Button("Commit Staged Changes", systemImage: "checkmark.circle") {
+                sourceControlViewModel.commit()
+            }
+            .workbenchShortcut(keyboardShortcuts.binding(for: .commitStagedChanges))
+            .disabled(!sourceControlViewModel.canCommit)
+
+            Divider()
+
+            Button("Fetch", systemImage: "arrow.down.circle", action: sourceControlViewModel.fetch)
+                .workbenchShortcut(keyboardShortcuts.binding(for: .fetchSourceControl))
+                .disabled(sourceControlViewModel.snapshot?.remotes.isEmpty != false || sourceControlViewModel.isBusy)
+
+            Button("Pull", systemImage: "arrow.down.to.line", action: sourceControlViewModel.pull)
+                .workbenchShortcut(keyboardShortcuts.binding(for: .pullSourceControl))
+                .disabled(!sourceControlViewModel.canPull)
+
+            Button("Push", systemImage: "arrow.up.to.line", action: sourceControlViewModel.push)
+                .workbenchShortcut(keyboardShortcuts.binding(for: .pushSourceControl))
+                .disabled(!sourceControlViewModel.canPush)
+
+            Button("Refresh", systemImage: "arrow.clockwise", action: sourceControlViewModel.refresh)
+                .disabled(sourceControlViewModel.isBusy || sourceControlViewModel.snapshot == nil)
         }
     }
 }
