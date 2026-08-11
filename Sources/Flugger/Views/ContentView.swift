@@ -6,7 +6,6 @@ struct ContentView: View {
     @AppStorage(PreferenceKeys.themeMode) private var themeMode = ThemeMode.system.rawValue
 
     private var selectedTheme: ThemeMode { ThemeMode(rawValue: themeMode) ?? .system }
-    private var isSidebarVisible: Bool { columnVisibility != .detailOnly }
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -25,22 +24,7 @@ struct ContentView: View {
         }
         .navigationSplitViewStyle(.balanced)
         .tint(WorkbenchColor.accent)
-        .toolbar(removing: .sidebarToggle)
         .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button {
-                    columnVisibility = isSidebarVisible ? .detailOnly : .all
-                } label: {
-                    Label(isSidebarVisible ? "Hide Sidebar" : "Show Sidebar", systemImage: "sidebar.left")
-                        .labelStyle(.iconOnly)
-                }
-                .workbenchTooltip(
-                    isSidebarVisible ? "Hide Sidebar" : "Show Sidebar",
-                    placement: .below
-                )
-                .accessibilityLabel(isSidebarVisible ? "Hide Sidebar" : "Show Sidebar")
-            }
-
             ToolbarItemGroup(placement: .primaryAction) {
                 Menu {
                     ForEach(ThemeMode.allCases, id: \.rawValue) { theme in

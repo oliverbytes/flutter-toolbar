@@ -83,6 +83,7 @@ private struct WorkbenchTooltipModifier: ViewModifier {
             .background {
                 WorkbenchTooltipAnchor(text: text, placement: placement)
             }
+            .accessibilityHint(text)
     }
 }
 
