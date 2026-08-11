@@ -12,6 +12,13 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
     case exportVisibleOutput
     case clearConsole
     case toggleTerminal
+    case showConsole
+    case showSourceControl
+    case stageAllChanges
+    case commitStagedChanges
+    case fetchSourceControl
+    case pullSourceControl
+    case pushSourceControl
     case increaseAppFontSize
     case decreaseAppFontSize
 
@@ -30,6 +37,13 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
         case .exportVisibleOutput: "Export Visible Output"
         case .clearConsole: "Clear Console"
         case .toggleTerminal: "Toggle Terminal"
+        case .showConsole: "Show Console"
+        case .showSourceControl: "Show Source Control"
+        case .stageAllChanges: "Stage All Changes"
+        case .commitStagedChanges: "Commit Staged Changes"
+        case .fetchSourceControl: "Fetch"
+        case .pullSourceControl: "Pull"
+        case .pushSourceControl: "Push"
         case .increaseAppFontSize: "Increase App Font Size"
         case .decreaseAppFontSize: "Decrease App Font Size"
         }
@@ -45,6 +59,15 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
     ]
     static let terminalActions: [WorkbenchAction] = [.toggleTerminal]
     static let appearanceActions: [WorkbenchAction] = [.increaseAppFontSize, .decreaseAppFontSize]
+    static let sourceControlActions: [WorkbenchAction] = [
+        .showConsole,
+        .showSourceControl,
+        .stageAllChanges,
+        .commitStagedChanges,
+        .fetchSourceControl,
+        .pullSourceControl,
+        .pushSourceControl,
+    ]
 }
 
 enum ShortcutModifier: String, CaseIterable, Codable, Identifiable {
@@ -200,6 +223,20 @@ extension WorkbenchAction {
             WorkbenchShortcut(key: .k, modifiers: [.command])
         case .toggleTerminal:
             WorkbenchShortcut(key: .graveAccent, modifiers: [.control])
+        case .showConsole:
+            WorkbenchShortcut(key: .one, modifiers: [.command])
+        case .showSourceControl:
+            WorkbenchShortcut(key: .two, modifiers: [.command])
+        case .stageAllChanges:
+            WorkbenchShortcut(key: .a, modifiers: [.command, .option])
+        case .commitStagedChanges:
+            WorkbenchShortcut(key: .returnKey, modifiers: [.command, .option])
+        case .fetchSourceControl:
+            WorkbenchShortcut(key: .f, modifiers: [.command, .option])
+        case .pullSourceControl:
+            WorkbenchShortcut(key: .l, modifiers: [.command, .option])
+        case .pushSourceControl:
+            WorkbenchShortcut(key: .p, modifiers: [.command, .option])
         case .increaseAppFontSize:
             WorkbenchShortcut(key: .plus, modifiers: [.command])
         case .decreaseAppFontSize:

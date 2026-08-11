@@ -50,6 +50,7 @@ struct LiveWorkspaceView: View {
             }
             .background(WorkbenchColor.background)
         }
+        .accessibilityIdentifier("consoleWorkspace")
     }
 
     private func clampedPaneHeight(_ height: Double, availableHeight: CGFloat) -> Double {

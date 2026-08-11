@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1C0B00000000000000000001 /* SourceControlModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C0A00000000000000000001 /* SourceControlModels.swift */; };
+		2C0B00000000000000000002 /* GitClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C0A00000000000000000002 /* GitClient.swift */; };
+		3C0B00000000000000000003 /* SourceControlViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0A00000000000000000003 /* SourceControlViewModel.swift */; };
+		4C0B00000000000000000004 /* SourceControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C0A00000000000000000004 /* SourceControlView.swift */; };
+		5C0B00000000000000000005 /* SourceControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0A00000000000000000005 /* SourceControlTests.swift */; };
+		7C0B00000000000000000007 /* SourceControlUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C0A00000000000000000007 /* SourceControlUITests.swift */; };
 		00AB36417BE4C2C30F25D549 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD7151997022F6BBEF75D7 /* ContentView.swift */; };
 		0708AED0CE4F1D8F854D4207 /* ConsoleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B8DF0CF0FE010E4C7D6DED5 /* ConsoleView.swift */; };
 		2487AB3EF1587368678F7359 /* ProjectMaintenanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D383EE24020F362DCA91D2AD /* ProjectMaintenanceTests.swift */; };
@@ -47,6 +53,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		7C0C00000000000000000007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5D6B3E4873E4844686FE3CFC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C065D9C14285BC70311DB6A0;
+			remoteInfo = Flugger;
+		};
 		BBCCD3B34FD02B6182712304 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 5D6B3E4873E4844686FE3CFC /* Project object */;
@@ -57,6 +70,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1C0A00000000000000000001 /* SourceControlModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlModels.swift; sourceTree = "<group>"; };
+		2C0A00000000000000000002 /* GitClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitClient.swift; sourceTree = "<group>"; };
+		3C0A00000000000000000003 /* SourceControlViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlViewModel.swift; sourceTree = "<group>"; };
+		4C0A00000000000000000004 /* SourceControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlView.swift; sourceTree = "<group>"; };
+		5C0A00000000000000000005 /* SourceControlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlTests.swift; sourceTree = "<group>"; };
+		7C0A00000000000000000007 /* SourceControlUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlUITests.swift; sourceTree = "<group>"; };
+		7C0D00000000000000000007 /* FluggerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FluggerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		03AB6D93B36C677EBF0B3A7F /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		0AE0F1B54A0388E1ADAB669F /* WorkbenchSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkbenchSidebar.swift; sourceTree = "<group>"; };
 		0B8DF0CF0FE010E4C7D6DED5 /* ConsoleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsoleView.swift; sourceTree = "<group>"; };
@@ -117,6 +137,7 @@
 				6FDD7151997022F6BBEF75D7 /* ContentView.swift */,
 				DFABB69362C437CFA6E504EE /* LegacySidebarToolbarItemCleanup.swift */,
 				F64599F0E692043A47F70D70 /* Settings */,
+				6C0A00000000000000000006 /* SourceControl */,
 				9F0E5889BEB1DE1E5FC89F9B /* Workspace */,
 			);
 			path = Views;
@@ -163,6 +184,7 @@
 			children = (
 				FA0A5717087F25DDC4AA0B27 /* Flugger.app */,
 				A5F49D2EEDB0D7F46814D566 /* FluggerTests.xctest */,
+				7C0D00000000000000000007 /* FluggerUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -177,6 +199,7 @@
 				0EA04432BDE70A9CE144D6CE /* LaunchConfig.swift */,
 				D298101938A5413CB9DCC6E8 /* LogEntry.swift */,
 				CE70EF2FEA7B5EDCF1D44794 /* RunnerMessage.swift */,
+				1C0A00000000000000000001 /* SourceControlModels.swift */,
 				EAE4D03BC832EA093551A641 /* WorkspaceModels.swift */,
 			);
 			path = Models;
@@ -190,6 +213,7 @@
 				6FB5C4F29E609E3A525A9AD6 /* MultiProjectRunnerTests.swift */,
 				D383EE24020F362DCA91D2AD /* ProjectMaintenanceTests.swift */,
 				C0FAAFA5E198564675DBAC21 /* ProjectValidationTests.swift */,
+				5C0A00000000000000000005 /* SourceControlTests.swift */,
 				162B1C791DC95E51A11D8786 /* TerminalWorkspaceManagerTests.swift */,
 				2225E093B82B1BEAF545586C /* ThemeModeTests.swift */,
 				AB0ED5E497C55E2FA3E83CD9 /* WorkspaceProjectIsolationTests.swift */,
@@ -199,11 +223,21 @@
 			path = Tests/FluggerTests;
 			sourceTree = "<group>";
 		};
+		7C0E00000000000000000007 /* FluggerUITests */ = {
+			isa = PBXGroup;
+			children = (
+				7C0A00000000000000000007 /* SourceControlUITests.swift */,
+			);
+			name = FluggerUITests;
+			path = Tests/FluggerUITests;
+			sourceTree = "<group>";
+		};
 		E084065B7BCA3D5B34DB6A36 = {
 			isa = PBXGroup;
 			children = (
 				3B9F301D7EE6BE4AAA7DF76D /* Flugger */,
 				DB9C99A99B83E698B5565B99 /* FluggerTests */,
+				7C0E00000000000000000007 /* FluggerUITests */,
 				AF32BE810854A2DD33FA8026 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -216,17 +250,27 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
+		6C0A00000000000000000006 /* SourceControl */ = {
+			isa = PBXGroup;
+			children = (
+				4C0A00000000000000000004 /* SourceControlView.swift */,
+			);
+			path = SourceControl;
+			sourceTree = "<group>";
+		};
 		FED200E5547B33292DAC4F8E /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				88F3D6AFD9D9F4086375B66C /* FlutterDaemon.swift */,
 				71934A11F27078BB2E195145 /* FlutterProjectMaintenanceService.swift */,
+				2C0A00000000000000000002 /* GitClient.swift */,
 				A0CE868A0610481F988454EE /* FlutterRunner.swift */,
 				C42D61244982D36CC59B56F1 /* KeyboardShortcutStore.swift */,
 				755F43520ADF1E76728F9292 /* TerminalWorkspaceManager.swift */,
 				F11099FCF848AE4E7D897218 /* UserDefaultsStore.swift */,
 				1A3C413A46014A6C1787E4BD /* WorkspaceStore.swift */,
 				A4F1C514A6001F3CB7C845D2 /* WorkspaceViewModel.swift */,
+				3C0A00000000000000000003 /* SourceControlViewModel.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -234,6 +278,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		7C0F00000000000000000007 /* FluggerUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7C1400000000000000000007 /* Build configuration list for PBXNativeTarget "FluggerUITests" */;
+			buildPhases = (
+				7C1000000000000000000007 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7C1100000000000000000007 /* PBXTargetDependency */,
+			);
+			name = FluggerUITests;
+			packageProductDependencies = (
+			);
+			productName = FluggerUITests;
+			productReference = 7C0D00000000000000000007 /* FluggerUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		ADE0B8CD35A8545A962E9CF4 /* FluggerTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5DD6F08728BED50C3B72A449 /* Build configuration list for PBXNativeTarget "FluggerTests" */;
@@ -302,6 +364,7 @@
 			targets = (
 				C065D9C14285BC70311DB6A0 /* Flugger */,
 				ADE0B8CD35A8545A962E9CF4 /* FluggerTests */,
+				7C0F00000000000000000007 /* FluggerUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -318,6 +381,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		7C1000000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7C0B00000000000000000007 /* SourceControlUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF0B899B367B3B5DEF6A591E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -327,6 +398,7 @@
 				E5B7224D61006A08408194BB /* MultiProjectRunnerTests.swift in Sources */,
 				2487AB3EF1587368678F7359 /* ProjectMaintenanceTests.swift in Sources */,
 				51F01DCB2D4C1AC8FE1A91F3 /* ProjectValidationTests.swift in Sources */,
+				5C0B00000000000000000005 /* SourceControlTests.swift in Sources */,
 				7F1E4F6716064B0CFBDCA8E9 /* TerminalWorkspaceManagerTests.swift in Sources */,
 				648965C44BBCF4C6C136B6A1 /* ThemeModeTests.swift in Sources */,
 				59ACC177FCB14BC5A444F1EE /* WorkspaceProjectIsolationTests.swift in Sources */,
@@ -346,6 +418,7 @@
 				AA0AD14BD3C84564A3BF8F41 /* Device.swift in Sources */,
 				A64DA7BE49AE46B4EBD82964 /* FluggerApp.swift in Sources */,
 				434A219E4683E9DCE116EE25 /* FlutterDaemon.swift in Sources */,
+				2C0B00000000000000000002 /* GitClient.swift in Sources */,
 				856A2316A3E033F6B0F5A420 /* FlutterProjectMaintenanceService.swift in Sources */,
 				FCFB244068E3E7FA83ACF722 /* FlutterRunner.swift in Sources */,
 				312E55F228081EA816F1DADF /* KeyboardShortcut.swift in Sources */,
@@ -355,6 +428,9 @@
 				6ECD3CAEC5F2D6F621BF41AE /* LiveWorkspaceView.swift in Sources */,
 				721E5248DA9472FDF665DEAE /* LogEntry.swift in Sources */,
 				BD789F4471451F982F278352 /* RunnerMessage.swift in Sources */,
+				1C0B00000000000000000001 /* SourceControlModels.swift in Sources */,
+				4C0B00000000000000000004 /* SourceControlView.swift in Sources */,
+				3C0B00000000000000000003 /* SourceControlViewModel.swift in Sources */,
 				719300B07EE2390FB5C1D46D /* SessionDetailView.swift in Sources */,
 				3BF5931C1FD30FCC3E6E512E /* SettingsView.swift in Sources */,
 				28AFA88B737DFE02C5F76CAF /* TerminalPaneView.swift in Sources */,
@@ -370,6 +446,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		7C1100000000000000000007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C065D9C14285BC70311DB6A0 /* Flugger */;
+			targetProxy = 7C0C00000000000000000007 /* PBXContainerItemProxy */;
+		};
 		688D4A77DDCDFE5AD97ABA7D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C065D9C14285BC70311DB6A0 /* Flugger */;
@@ -378,6 +459,36 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		7C1200000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fluttervibe.FluggerUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_TARGET_NAME = Flugger;
+			};
+			name = Debug;
+		};
+		7C1300000000000000000007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fluttervibe.FluggerUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_TARGET_NAME = Flugger;
+			};
+			name = Release;
+		};
 		14112B6E3B6810CF5DDA0881 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -580,6 +691,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		7C1400000000000000000007 /* Build configuration list for PBXNativeTarget "FluggerUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7C1200000000000000000007 /* Debug */,
+				7C1300000000000000000007 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		3E390EC327689EB35C60E2B1 /* Build configuration list for PBXNativeTarget "Flugger" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
