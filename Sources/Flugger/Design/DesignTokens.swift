@@ -73,3 +73,24 @@ struct WorkbenchIconButtonStyle: ButtonStyle {
             .contentShape(RoundedRectangle(cornerRadius: WorkbenchRadius.small, style: .continuous))
     }
 }
+
+private struct WorkbenchTooltipModifier: ViewModifier {
+    let text: String
+    let placement: WorkbenchTooltipPlacement
+
+    func body(content: Content) -> some View {
+        content
+            .background {
+                WorkbenchTooltipAnchor(text: text, placement: placement)
+            }
+    }
+}
+
+extension View {
+    func workbenchTooltip(
+        _ text: String,
+        placement: WorkbenchTooltipPlacement = .above
+    ) -> some View {
+        modifier(WorkbenchTooltipModifier(text: text, placement: placement))
+    }
+}

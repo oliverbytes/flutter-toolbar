@@ -40,7 +40,7 @@ struct SettingsView: View {
                 Section("Recent Projects") {
                     LabeledContent("Stored", value: "\(viewModel.recentProjects.count) of \(WorkspaceStore.recentProjectLimit)")
                     Button("Clear Recent Projects", role: .destructive, action: viewModel.clearRecentProjects)
-                        .disabled(viewModel.recentProjects.isEmpty)
+                        .disabled(viewModel.recentProjects.isEmpty || viewModel.hasRunningProjects)
                 }
 
                 Section("Run History") {

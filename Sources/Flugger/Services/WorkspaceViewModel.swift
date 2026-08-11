@@ -17,6 +17,7 @@ final class WorkspaceViewModel: ObservableObject {
     @Published private(set) var logLines: [LogEntry] = []
     @Published private(set) var recentProjects: [RecentProject] = []
     @Published private(set) var sessions: [RunSession] = []
+    @Published private(set) var projectRunStates: [String: AppState] = [:]
     @Published var selection: WorkspaceSelection = .console
     @Published var searchText = ""
     @Published var enabledLogTypes = Set(LogEntryType.allCases)
@@ -26,11 +27,13 @@ final class WorkspaceViewModel: ObservableObject {
     private let daemon: FlutterDaemon
     private let store: WorkspaceStore
     private let projectMaintenance: FlutterProjectMaintaining
+    private let runnerFactory: @MainActor (String, String) -> FlutterRunner
     private var snapshot: WorkspaceSnapshot
-    private var runner: FlutterRunner?
-    private var runnerCancellables = Set<AnyCancellable>()
+    private var runnersByProject: [String: FlutterRunner] = [:]
+    private var runnerCancellablesByProject: [String: Set<AnyCancellable>] = [:]
+    private var projectStatuses: [String: String] = [:]
     private var daemonCancellables = Set<AnyCancellable>()
-    private var activeRun: ActiveRun?
+    private var activeRunsByProject: [String: ActiveRun] = [:]
     private var logsByProject: [String: [LogEntry]] = [:]
     private var rolledOverLogKeys: Set<String> = []
 
@@ -51,11 +54,15 @@ final class WorkspaceViewModel: ObservableObject {
         daemon: FlutterDaemon? = nil,
         projectMaintenance: FlutterProjectMaintaining? = nil,
         startDaemon: Bool = true,
-        restoreLastProject: Bool = true
+        restoreLastProject: Bool = true,
+        runnerFactory: @escaping @MainActor (String, String) -> FlutterRunner = { projectPath, deviceId in
+            FlutterRunner(projectPath: projectPath, deviceId: deviceId)
+        }
     ) {
         self.store = store
         self.daemon = daemon ?? FlutterDaemon()
         self.projectMaintenance = projectMaintenance ?? FlutterProjectMaintenanceService()
+        self.runnerFactory = runnerFactory
         snapshot = (try? store.load()) ?? WorkspaceSnapshot()
         recentProjects = snapshot.recentProjects
         sessions = snapshot.sessions
@@ -91,6 +98,15 @@ final class WorkspaceViewModel: ObservableObject {
     var canRun: Bool { projectPath != nil && selectedDeviceId != nil && !isAppRunning && !isProjectMaintenanceRunning }
     var canMaintainProject: Bool { projectPath != nil && !isAppRunning && !isProjectMaintenanceRunning }
     var isDaemonRunning: Bool { daemon.isRunning }
+    var hasRunningProjects: Bool { projectRunStates.values.contains(where: \.isRunning) }
+
+    func runState(for projectPath: String) -> AppState {
+        projectRunStates[projectPath] ?? .idle
+    }
+
+    func isProjectRunning(_ projectPath: String) -> Bool {
+        runState(for: projectPath).isRunning
+    }
 
     var selectedDevice: Device? {
         devices.first { $0.id == selectedDeviceId }
@@ -113,7 +129,7 @@ final class WorkspaceViewModel: ObservableObject {
         if projectPath == nil { return "Choose a Flutter project first." }
         if isProjectMaintenanceRunning { return "Project maintenance is in progress." }
         if selectedDeviceId == nil { return "Choose a connected device first." }
-        if isAppRunning { return "A Flutter app is already active." }
+        if isAppRunning { return "This project is already active." }
         return nil
     }
 
@@ -205,7 +221,8 @@ final class WorkspaceViewModel: ObservableObject {
         try persistProject(project, promote: promoteInRecents)
 
         if updateSelection { selection = .project(path) }
-        status = "Ready to run \(name)"
+        appState = projectRunStates[path] ?? .idle
+        status = projectStatuses[path] ?? "Ready to run \(name)"
         if isFirstProjectLog {
             addLog("Project: \(name)", type: .command, projectPath: path)
         }
@@ -224,6 +241,10 @@ final class WorkspaceViewModel: ObservableObject {
     }
 
     func removeRecentProject(_ project: RecentProject) {
+        guard !isProjectRunning(project.path) else {
+            status = "Stop \(project.displayName) before removing it from recents."
+            return
+        }
         do {
             try store.removeProject(path: project.path, from: &snapshot)
             recentProjects = snapshot.recentProjects
@@ -234,6 +255,10 @@ final class WorkspaceViewModel: ObservableObject {
     }
 
     func clearRecentProjects() {
+        guard !hasRunningProjects else {
+            status = "Stop running projects before clearing recents."
+            return
+        }
         snapshot.recentProjects.removeAll()
         do {
             try store.save(snapshot)
@@ -249,12 +274,12 @@ final class WorkspaceViewModel: ObservableObject {
     }
 
     func runApp() {
-        guard let projectPath, let device = selectedDevice else { return }
+        guard canRun, let projectPath, let device = selectedDevice else { return }
 
-        runnerCancellables.removeAll()
         let configName = selectedLaunchConfig?.displayName ?? "Debug"
-        activeRun = ActiveRun(
-            id: UUID(),
+        let runID = UUID()
+        activeRunsByProject[projectPath] = ActiveRun(
+            id: runID,
             projectPath: projectPath,
             projectName: projectName,
             deviceId: device.id,
@@ -263,28 +288,50 @@ final class WorkspaceViewModel: ObservableObject {
             startedAt: .now
         )
 
-        let newRunner = FlutterRunner(projectPath: projectPath, deviceId: device.id)
+        let newRunner = runnerFactory(projectPath, device.id)
         newRunner.onLogOutput = { [weak self] message, type in
             self?.addLog(message, type: type, projectPath: projectPath)
         }
         newRunner.onCompletion = { [weak self] outcome in
-            self?.finalizeActiveRun(outcome: outcome)
+            self?.finalizeActiveRun(for: projectPath, runID: runID, outcome: outcome)
         }
-        newRunner.$appState
-            .sink { [weak self] state in self?.appState = state }
-            .store(in: &runnerCancellables)
-        newRunner.$status
-            .sink { [weak self] status in self?.status = status }
-            .store(in: &runnerCancellables)
 
-        runner = newRunner
+        var cancellables = Set<AnyCancellable>()
+        newRunner.$appState
+            .sink { [weak self, weak newRunner] state in
+                guard let self, let newRunner, self.runnersByProject[projectPath] === newRunner else { return }
+                self.projectRunStates[projectPath] = state
+                if self.projectPath == projectPath { self.appState = state }
+            }
+            .store(in: &cancellables)
+        newRunner.$status
+            .sink { [weak self, weak newRunner] status in
+                guard let self, let newRunner, self.runnersByProject[projectPath] === newRunner else { return }
+                self.projectStatuses[projectPath] = status
+                if self.projectPath == projectPath { self.status = status }
+            }
+            .store(in: &cancellables)
+
+        runnersByProject[projectPath] = newRunner
+        runnerCancellablesByProject[projectPath] = cancellables
         selection = .project(projectPath)
         newRunner.start(with: selectedLaunchConfig)
     }
 
-    func stopApp() { runner?.stop() }
-    func hotReload() { runner?.hotReload() }
-    func hotRestart() { runner?.hotRestart() }
+    func stopApp() {
+        guard let projectPath else { return }
+        runnersByProject[projectPath]?.stop()
+    }
+
+    func hotReload() {
+        guard let projectPath else { return }
+        runnersByProject[projectPath]?.hotReload()
+    }
+
+    func hotRestart() {
+        guard let projectPath else { return }
+        runnersByProject[projectPath]?.hotRestart()
+    }
 
     func requestCleanAndPubGet() {
         guard canMaintainProject else { return }
@@ -305,7 +352,11 @@ final class WorkspaceViewModel: ObservableObject {
         logsByProject[key] = []
         rolledOverLogKeys.remove(key)
         logLines = []
-        status = "Console cleared"
+        if let projectPath {
+            updateStatus("Console cleared", for: projectPath)
+        } else {
+            status = "Console cleared"
+        }
     }
 
     func toggleFilter(_ type: LogEntryType) {
@@ -455,9 +506,9 @@ final class WorkspaceViewModel: ObservableObject {
         try? persistProject(project, promote: false)
     }
 
-    private func finalizeActiveRun(outcome: RunOutcome) {
-        guard let activeRun else { return }
-        self.activeRun = nil
+    private func finalizeActiveRun(for projectPath: String, runID: UUID, outcome: RunOutcome) {
+        guard let activeRun = activeRunsByProject[projectPath], activeRun.id == runID else { return }
+        activeRunsByProject[projectPath] = nil
         let session = RunSession(
             id: activeRun.id,
             projectPath: activeRun.projectPath,
@@ -489,7 +540,7 @@ final class WorkspaceViewModel: ObservableObject {
         }
 
         isProjectMaintenanceRunning = true
-        status = "Running \(operation.displayName)…"
+        updateStatus("Running \(operation.displayName)…", for: projectPath)
         let started = projectMaintenance.run(
             operation,
             projectPath: projectPath,
@@ -501,13 +552,13 @@ final class WorkspaceViewModel: ObservableObject {
                 self.isProjectMaintenanceRunning = false
                 switch outcome {
                 case .succeeded:
-                    self.status = "\(operation.displayName) completed"
+                    self.updateStatus("\(operation.displayName) completed", for: projectPath)
                     self.addLog("\(operation.displayName) completed", type: .info, projectPath: projectPath)
                 case let .failed(command, exitCode):
-                    self.status = "\(operation.displayName) failed"
+                    self.updateStatus("\(operation.displayName) failed", for: projectPath)
                     self.addLog("\(command) exited with code \(exitCode)", type: .error, projectPath: projectPath)
                 case let .launchFailed(message):
-                    self.status = "Could not start \(operation.displayName)"
+                    self.updateStatus("Could not start \(operation.displayName)", for: projectPath)
                     self.addLog(message, type: .error, projectPath: projectPath)
                 }
             }
@@ -515,7 +566,14 @@ final class WorkspaceViewModel: ObservableObject {
 
         if !started {
             isProjectMaintenanceRunning = false
-            status = "Project maintenance is already in progress."
+            updateStatus("Project maintenance is already in progress.", for: projectPath)
+        }
+    }
+
+    private func updateStatus(_ newStatus: String, for projectPath: String) {
+        projectStatuses[projectPath] = newStatus
+        if self.projectPath == projectPath {
+            status = newStatus
         }
     }
 

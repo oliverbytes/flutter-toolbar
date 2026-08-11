@@ -11,7 +11,11 @@ struct WorkbenchSidebar: View {
                     Button {
                         viewModel.selectWorkspace(.project(project.path))
                     } label: {
-                        SidebarProjectRow(project: project, isCurrent: project.path == viewModel.projectPath)
+                        SidebarProjectRow(
+                            project: project,
+                            isCurrent: project.path == viewModel.projectPath,
+                            runState: viewModel.runState(for: project.path)
+                        )
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
                     }
@@ -27,6 +31,7 @@ struct WorkbenchSidebar: View {
                             Button("Remove from Recents", role: .destructive) {
                                 viewModel.removeRecentProject(project)
                             }
+                            .disabled(viewModel.isProjectRunning(project.path))
                         }
                 }
 
@@ -88,6 +93,7 @@ private struct SidebarSelectionBackground: View {
 private struct SidebarProjectRow: View {
     let project: RecentProject
     let isCurrent: Bool
+    let runState: AppState
 
     var body: some View {
         HStack(spacing: WorkbenchSpacing.small) {
@@ -104,6 +110,20 @@ private struct SidebarProjectRow: View {
                     .font(WorkbenchFont.caption)
                     .foregroundStyle(WorkbenchColor.textSecondary)
                     .lineLimit(1)
+            }
+
+            Spacer(minLength: WorkbenchSpacing.xs)
+
+            if runState.isRunning {
+                Circle()
+                    .fill(runState == .running ? WorkbenchColor.success : WorkbenchColor.warning)
+                    .frame(width: 7, height: 7)
+                    .accessibilityLabel(runState == .running ? "Running" : "Transitioning")
+            } else if runState == .error {
+                Circle()
+                    .fill(WorkbenchColor.error)
+                    .frame(width: 7, height: 7)
+                    .accessibilityLabel("Run failed")
             }
         }
         .padding(.vertical, WorkbenchSpacing.xs)

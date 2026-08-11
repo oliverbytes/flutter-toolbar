@@ -134,7 +134,7 @@ private struct RunControlCluster: View {
             }
             .buttonStyle(WorkbenchIconButtonStyle(color: WorkbenchColor.textSecondary))
             .disabled(!viewModel.canMaintainProject)
-            .help(viewModel.projectMaintenanceBlockReason ?? actionHelp("Clean + Pub Get", action: .cleanAndPubGet))
+            .workbenchTooltip(viewModel.projectMaintenanceBlockReason ?? actionHelp("Clean + Pub Get", action: .cleanAndPubGet))
             .accessibilityLabel("Clean and Pub Get")
 
             Button(action: viewModel.pubGet) {
@@ -142,7 +142,7 @@ private struct RunControlCluster: View {
             }
             .buttonStyle(WorkbenchIconButtonStyle(color: WorkbenchColor.accent.opacity(0.78)))
             .disabled(!viewModel.canMaintainProject)
-            .help(viewModel.projectMaintenanceBlockReason ?? actionHelp("Pub Get", action: .pubGet))
+            .workbenchTooltip(viewModel.projectMaintenanceBlockReason ?? actionHelp("Pub Get", action: .pubGet))
             .accessibilityLabel("Pub Get")
 
             Divider()
@@ -154,7 +154,7 @@ private struct RunControlCluster: View {
             }
             .buttonStyle(WorkbenchIconButtonStyle(color: WorkbenchColor.warning))
             .disabled(!viewModel.canControl)
-            .help(actionHelp("Hot Reload", action: .hotReload))
+            .workbenchTooltip(actionHelp("Hot Reload", action: .hotReload))
             .accessibilityLabel("Hot Reload")
 
             Button(action: viewModel.hotRestart) {
@@ -162,7 +162,7 @@ private struct RunControlCluster: View {
             }
             .buttonStyle(WorkbenchIconButtonStyle(color: WorkbenchColor.info))
             .disabled(!viewModel.canControl)
-            .help(actionHelp("Hot Restart", action: .hotRestart))
+            .workbenchTooltip(actionHelp("Hot Restart", action: .hotRestart))
             .accessibilityLabel("Hot Restart")
 
             if viewModel.isAppRunning {
@@ -172,7 +172,7 @@ private struct RunControlCluster: View {
                 }
                 .buttonStyle(WorkbenchIconButtonStyle(color: WorkbenchColor.error))
                 .disabled(viewModel.appState == .stopping)
-                .help(actionHelp("Stop", action: .stop))
+                .workbenchTooltip(actionHelp("Stop", action: .stop))
                 .accessibilityLabel(viewModel.appState == .stopping ? "Stopping" : "Stop")
             } else {
                 Button(action: viewModel.runApp) {
@@ -180,7 +180,7 @@ private struct RunControlCluster: View {
                 }
                 .buttonStyle(WorkbenchIconButtonStyle(color: WorkbenchColor.success))
                 .disabled(!viewModel.canRun)
-                .help(viewModel.runBlockReason ?? actionHelp("Run", action: .run))
+                .workbenchTooltip(viewModel.runBlockReason ?? actionHelp("Run", action: .run))
                 .accessibilityLabel("Run")
             }
         }

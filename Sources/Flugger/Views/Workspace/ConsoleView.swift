@@ -56,7 +56,7 @@ struct ConsoleToolbar: View {
                     .frame(width: 44, height: 44)
             }
             .menuStyle(.borderlessButton)
-            .help("Filter console output")
+            .workbenchTooltip("Filter console output", placement: .below)
             .accessibilityLabel("Log Filters")
 
             Spacer(minLength: 0)
@@ -80,7 +80,7 @@ struct ConsoleToolbar: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(WorkbenchColor.textSecondary)
-                .help("Clear console search")
+                .workbenchTooltip("Clear console search", placement: .below)
                 .accessibilityLabel("Clear search")
             }
         }
@@ -102,7 +102,10 @@ struct ConsoleToolbar: View {
                     .labelStyle(.iconOnly)
             }
             .buttonStyle(WorkbenchIconButtonStyle())
-            .help(followOutput ? "Following new output" : "Output following paused")
+            .workbenchTooltip(
+                followOutput ? "Auto-scroll outputs" : "Output following paused",
+                placement: .below
+            )
             .accessibilityLabel(followOutput ? "Pause output following" : "Follow new output")
 
             Button(action: viewModel.copyVisibleLogs) {
@@ -111,7 +114,7 @@ struct ConsoleToolbar: View {
             }
             .buttonStyle(WorkbenchIconButtonStyle())
             .disabled(viewModel.filteredLogs.isEmpty)
-            .help(actionHelp("Copy Visible Output", action: .copyVisibleOutput))
+            .workbenchTooltip(actionHelp("Copy Visible Output", action: .copyVisibleOutput), placement: .below)
             .accessibilityLabel("Copy Visible Output")
 
             Button(action: viewModel.exportVisibleLogs) {
@@ -120,7 +123,7 @@ struct ConsoleToolbar: View {
             }
             .buttonStyle(WorkbenchIconButtonStyle())
             .disabled(viewModel.filteredLogs.isEmpty)
-            .help(actionHelp("Export Visible Output", action: .exportVisibleOutput))
+            .workbenchTooltip(actionHelp("Export Visible Output", action: .exportVisibleOutput), placement: .below)
             .accessibilityLabel("Export Visible Output")
 
             Button(action: viewModel.clearLogs) {
@@ -129,7 +132,7 @@ struct ConsoleToolbar: View {
             }
             .buttonStyle(WorkbenchIconButtonStyle())
             .disabled(viewModel.logLines.isEmpty)
-            .help(actionHelp("Clear Console", action: .clearConsole))
+            .workbenchTooltip(actionHelp("Clear Console", action: .clearConsole), placement: .below)
             .accessibilityLabel("Clear Console")
         }
     }
@@ -342,7 +345,7 @@ struct WorkbenchStatusBar: View {
             }
             .buttonStyle(WorkbenchIconButtonStyle())
             .disabled(consoleFontSize <= 9)
-            .help("Decrease console font size")
+            .workbenchTooltip("Decrease console font size")
             .accessibilityLabel("Decrease Console Font Size")
 
             Button {
@@ -353,7 +356,7 @@ struct WorkbenchStatusBar: View {
             }
             .buttonStyle(WorkbenchIconButtonStyle())
             .disabled(consoleFontSize >= 20)
-            .help("Increase console font size")
+            .workbenchTooltip("Increase console font size")
             .accessibilityLabel("Increase Console Font Size")
         }
         .padding(.horizontal, WorkbenchSpacing.medium)
