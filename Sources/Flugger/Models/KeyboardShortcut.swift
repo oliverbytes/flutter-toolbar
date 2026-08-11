@@ -13,6 +13,7 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
     case copyVisibleOutput
     case exportVisibleOutput
     case clearConsole
+    case toggleTerminal
     case increaseAppFontSize
     case decreaseAppFontSize
 
@@ -32,6 +33,7 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
         case .copyVisibleOutput: "Copy Visible Output"
         case .exportVisibleOutput: "Export Visible Output"
         case .clearConsole: "Clear Current Log"
+        case .toggleTerminal: "Toggle Terminal"
         case .increaseAppFontSize: "Increase App Font Size"
         case .decreaseAppFontSize: "Decrease App Font Size"
         }
@@ -47,6 +49,7 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
         .exportVisibleOutput,
         .clearConsole,
     ]
+    static let terminalActions: [WorkbenchAction] = [.toggleTerminal]
     static let appearanceActions: [WorkbenchAction] = [.increaseAppFontSize, .decreaseAppFontSize]
 }
 
@@ -109,6 +112,7 @@ enum ShortcutKey: String, CaseIterable, Codable, Identifiable {
     case closeBracket = "]"
     case minus = "-"
     case plus = "+"
+    case graveAccent = "`"
     case returnKey = "return"
     case space = "space"
 
@@ -149,6 +153,7 @@ enum ShortcutKey: String, CaseIterable, Codable, Identifiable {
         .closeBracket,
         .minus,
         .plus,
+        .graveAccent,
     ]
     static let special: [ShortcutKey] = [.returnKey, .space]
 }
@@ -203,6 +208,8 @@ extension WorkbenchAction {
             WorkbenchShortcut(key: .e, modifiers: [.command, .shift])
         case .clearConsole:
             WorkbenchShortcut(key: .k, modifiers: [.command])
+        case .toggleTerminal:
+            WorkbenchShortcut(key: .graveAccent, modifiers: [.control])
         case .increaseAppFontSize:
             WorkbenchShortcut(key: .plus, modifiers: [.command])
         case .decreaseAppFontSize:

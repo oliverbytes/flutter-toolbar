@@ -8,13 +8,15 @@ struct RecentProject: Codable, Hashable, Identifiable {
     var lastOpenedAt: Date
     var lastDeviceId: String?
     var lastConfigurationName: String?
+    var terminalWorkspace: TerminalWorkspaceSnapshot?
 
     init(
         path: String,
         displayName: String? = nil,
         lastOpenedAt: Date = .now,
         lastDeviceId: String? = nil,
-        lastConfigurationName: String? = nil
+        lastConfigurationName: String? = nil,
+        terminalWorkspace: TerminalWorkspaceSnapshot? = nil
     ) {
         let canonicalPath = URL(fileURLWithPath: path)
             .standardizedFileURL
@@ -25,6 +27,41 @@ struct RecentProject: Codable, Hashable, Identifiable {
         self.lastOpenedAt = lastOpenedAt
         self.lastDeviceId = lastDeviceId
         self.lastConfigurationName = lastConfigurationName
+        self.terminalWorkspace = terminalWorkspace
+    }
+}
+
+struct TerminalTabSnapshot: Codable, Hashable, Identifiable {
+    let id: UUID
+    var title: String
+
+    init(id: UUID = UUID(), title: String) {
+        self.id = id
+        self.title = title
+    }
+}
+
+struct TerminalWorkspaceSnapshot: Codable, Hashable {
+    static let defaultPaneHeight = 260.0
+    static let minimumPaneHeight = 160.0
+
+    var isVisible: Bool
+    var paneHeight: Double
+    var tabs: [TerminalTabSnapshot]
+    var selectedTabID: UUID?
+
+    init(
+        isVisible: Bool = false,
+        paneHeight: Double = defaultPaneHeight,
+        tabs: [TerminalTabSnapshot] = [],
+        selectedTabID: UUID? = nil
+    ) {
+        self.isVisible = isVisible
+        self.paneHeight = max(Self.minimumPaneHeight, paneHeight)
+        self.tabs = tabs
+        self.selectedTabID = tabs.contains(where: { $0.id == selectedTabID })
+            ? selectedTabID
+            : tabs.first?.id
     }
 }
 

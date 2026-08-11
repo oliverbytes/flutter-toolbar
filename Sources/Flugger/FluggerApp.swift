@@ -62,6 +62,7 @@ struct FluggerApp: App {
             SidebarCommands()
             WorkbenchCommands(
                 viewModel: viewModel,
+                terminalWorkspaces: viewModel.terminalWorkspaces,
                 keyboardShortcuts: keyboardShortcuts,
                 appFontSize: $appFontSize
             )
@@ -77,6 +78,7 @@ struct FluggerApp: App {
 
 private struct WorkbenchCommands: Commands {
     @ObservedObject var viewModel: WorkspaceViewModel
+    @ObservedObject var terminalWorkspaces: TerminalWorkspaceManager
     @ObservedObject var keyboardShortcuts: KeyboardShortcutStore
     @Binding var appFontSize: Double
 
@@ -125,6 +127,16 @@ private struct WorkbenchCommands: Commands {
             Button("Hot Restart", systemImage: "arrow.triangle.2.circlepath", action: viewModel.hotRestart)
                 .workbenchShortcut(keyboardShortcuts.binding(for: .hotRestart))
                 .disabled(!viewModel.canControl)
+        }
+
+        CommandMenu("Terminal") {
+            Button(
+                terminalWorkspaces.isVisible(for: viewModel.projectPath) ? "Hide Terminal" : "Show Terminal",
+                systemImage: "terminal",
+                action: viewModel.toggleTerminal
+            )
+            .workbenchShortcut(keyboardShortcuts.binding(for: .toggleTerminal))
+            .disabled(!viewModel.isTerminalAvailable)
         }
 
         CommandMenu("Logs") {

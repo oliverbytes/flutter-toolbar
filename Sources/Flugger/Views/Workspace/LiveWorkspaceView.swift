@@ -2,17 +2,63 @@ import SwiftUI
 
 struct LiveWorkspaceView: View {
     @ObservedObject var viewModel: WorkspaceViewModel
+    @ObservedObject private var terminalWorkspaces: TerminalWorkspaceManager
+
+    init(viewModel: WorkspaceViewModel) {
+        self.viewModel = viewModel
+        terminalWorkspaces = viewModel.terminalWorkspaces
+    }
 
     var body: some View {
-        VStack(spacing: 0) {
-            SetupBar(viewModel: viewModel)
-            Divider().overlay(WorkbenchColor.divider)
-            ConsoleToolbar(viewModel: viewModel)
-            Divider().overlay(WorkbenchColor.divider)
-            ConsolePanel(viewModel: viewModel)
-            WorkbenchStatusBar(viewModel: viewModel)
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                SetupBar(viewModel: viewModel)
+                Divider().overlay(WorkbenchColor.divider)
+
+                VStack(spacing: 0) {
+                    ConsoleToolbar(viewModel: viewModel)
+                    Divider().overlay(WorkbenchColor.divider)
+                    ConsolePanel(viewModel: viewModel)
+                }
+                .frame(minHeight: 180)
+
+                if let projectPath = viewModel.projectPath,
+                   viewModel.isTerminalAvailable,
+                   terminalWorkspaces.isVisible(for: projectPath) {
+                    let paneHeight = clampedPaneHeight(
+                        terminalWorkspaces.snapshot(for: projectPath).paneHeight,
+                        availableHeight: geometry.size.height
+                    )
+
+                    TerminalResizeDivider(
+                        currentHeight: paneHeight,
+                        onChange: { proposedHeight in
+                            terminalWorkspaces.updatePaneHeight(
+                                clampedPaneHeight(proposedHeight, availableHeight: geometry.size.height),
+                                for: projectPath,
+                                persist: false
+                            )
+                        },
+                        onEnd: { terminalWorkspaces.persistPaneHeight(for: projectPath) }
+                    )
+
+                    TerminalPaneView(manager: terminalWorkspaces, projectPath: projectPath)
+                        .frame(height: CGFloat(paneHeight))
+                }
+
+                WorkbenchStatusBar(viewModel: viewModel)
+            }
+            .background(WorkbenchColor.background)
         }
-        .background(WorkbenchColor.background)
+    }
+
+    private func clampedPaneHeight(_ height: Double, availableHeight: CGFloat) -> Double {
+        let reservedHeight = 60.0 + 44.0 + 180.0 + 8.0
+        let maximumHeight = max(
+            TerminalWorkspaceSnapshot.minimumPaneHeight,
+            Double(availableHeight) - reservedHeight
+        )
+        return min(maximumHeight, max(TerminalWorkspaceSnapshot.minimumPaneHeight, height))
     }
 }
 

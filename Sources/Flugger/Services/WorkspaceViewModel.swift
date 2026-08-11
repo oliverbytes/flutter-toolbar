@@ -32,6 +32,8 @@ final class WorkspaceViewModel: ObservableObject {
     @Published private(set) var isProjectMaintenanceRunning = false
     @Published private(set) var activeMaintenanceProjectPath: String?
 
+    let terminalWorkspaces: TerminalWorkspaceManager
+
     private let daemon: FlutterDaemon
     private let store: WorkspaceStore
     private let projectMaintenance: FlutterProjectMaintaining
@@ -77,8 +79,13 @@ final class WorkspaceViewModel: ObservableObject {
         self.projectMaintenance = projectMaintenance ?? FlutterProjectMaintenanceService()
         self.runnerFactory = runnerFactory
         snapshot = (try? store.load()) ?? WorkspaceSnapshot()
+        terminalWorkspaces = TerminalWorkspaceManager(projects: snapshot.recentProjects)
         recentProjects = snapshot.recentProjects
         sessions = snapshot.sessions
+
+        terminalWorkspaces.onSnapshotChange = { [weak self] projectPath, terminalSnapshot in
+            self?.persistTerminalWorkspace(terminalSnapshot, for: projectPath)
+        }
 
         bindDaemon()
         if restoreLastProject {
@@ -112,6 +119,9 @@ final class WorkspaceViewModel: ObservableObject {
     var canMaintainProject: Bool { projectPath != nil && !isAppRunning && !isProjectMaintenanceRunning }
     var isDaemonRunning: Bool { daemon.isRunning }
     var hasRunningProjects: Bool { projectRunStates.values.contains(where: \.isRunning) }
+    var isTerminalAvailable: Bool {
+        projectPath != nil && selectedSession == nil
+    }
 
     func runState(for projectPath: String) -> AppState {
         projectRunStates[projectPath] ?? .idle
@@ -239,7 +249,8 @@ final class WorkspaceViewModel: ObservableObject {
             displayName: name,
             lastOpenedAt: promoteInRecents ? .now : (existing?.lastOpenedAt ?? .now),
             lastDeviceId: selectedDeviceId,
-            lastConfigurationName: selectedLaunchConfigName
+            lastConfigurationName: selectedLaunchConfigName,
+            terminalWorkspace: existing?.terminalWorkspace
         )
         if let existing {
             project.lastDeviceId = existing.lastDeviceId
@@ -250,6 +261,7 @@ final class WorkspaceViewModel: ObservableObject {
         if updateSelection { selection = .project(path) }
         appState = projectRunStates[path] ?? .idle
         status = projectStatuses[path] ?? "Ready to run \(name)"
+        terminalWorkspaces.activateProject(path)
         if isFirstProjectLog {
             addLog("Project: \(name)", type: .command, projectPath: path)
         }
@@ -275,6 +287,7 @@ final class WorkspaceViewModel: ObservableObject {
         do {
             try store.removeProject(path: project.path, from: &snapshot)
             recentProjects = snapshot.recentProjects
+            terminalWorkspaces.removeProject(project.path)
             if selection == .project(project.path) { selection = .console }
         } catch {
             status = "Could not update recent projects: \(error.localizedDescription)"
@@ -290,6 +303,7 @@ final class WorkspaceViewModel: ObservableObject {
         do {
             try store.save(snapshot)
             recentProjects = []
+            terminalWorkspaces.retainProjects([])
             if case .project = selection { selection = .console }
         } catch {
             status = "Could not clear recent projects: \(error.localizedDescription)"
@@ -445,6 +459,11 @@ final class WorkspaceViewModel: ObservableObject {
 
     func refreshDevices() { daemon.refreshDevices() }
 
+    func toggleTerminal() {
+        guard isTerminalAvailable, let projectPath else { return }
+        terminalWorkspaces.toggle(for: projectPath)
+    }
+
     func retryDaemon() {
         status = "Restarting Flutter tools…"
         daemon.restart()
@@ -548,6 +567,21 @@ final class WorkspaceViewModel: ObservableObject {
             try store.updateProject(project, in: &snapshot)
         }
         recentProjects = snapshot.recentProjects
+        terminalWorkspaces.retainProjects(Set(recentProjects.map(\.path)))
+    }
+
+    private func persistTerminalWorkspace(
+        _ terminalSnapshot: TerminalWorkspaceSnapshot,
+        for projectPath: String
+    ) {
+        guard let index = snapshot.recentProjects.firstIndex(where: { $0.path == projectPath }) else { return }
+        snapshot.recentProjects[index].terminalWorkspace = terminalSnapshot
+        do {
+            try store.updateProject(snapshot.recentProjects[index], in: &snapshot)
+            recentProjects = snapshot.recentProjects
+        } catch {
+            status = "Could not save terminal layout: \(error.localizedDescription)"
+        }
     }
 
     private func updateCurrentProjectPreferences() {
