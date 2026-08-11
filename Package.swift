@@ -2,23 +2,25 @@
 import PackageDescription
 
 let package = Package(
-    name: "FlutterToolbar",
+    name: "Flugger",
     platforms: [
-        .macOS(.v13)
+        .macOS("15.0")
     ],
     products: [
         .executable(
-            name: "FlutterToolbar",
-            targets: ["FlutterToolbar"]
+            name: "Flugger",
+            targets: ["Flugger"]
         ),
     ],
     targets: [
         .executableTarget(
-            name: "FlutterToolbar",
-            path: "Sources/FlutterToolbar",
+            name: "Flugger",
+            path: "Sources/Flugger",
             exclude: [
                 "Info.plist",
-                "FlutterToolbar.entitlements"
+                "Flugger.entitlements",
+                "Assets.xcassets",
+                "Design/AppIconMaster.png"
             ],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency"),
@@ -26,6 +28,11 @@ let package = Package(
             linkerSettings: [
                 .linkedFramework("AppKit"),
             ]
+        ),
+        .testTarget(
+            name: "FluggerTests",
+            dependencies: ["Flugger"],
+            path: "Tests/FluggerTests"
         ),
     ]
 )
