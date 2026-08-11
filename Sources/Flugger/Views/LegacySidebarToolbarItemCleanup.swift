@@ -138,10 +138,11 @@ final class WorkbenchTooltipPanel: NSPanel {
 
 private struct WorkbenchTooltipBubble: View {
     let text: String
+    @AppStorage(PreferenceKeys.appFontSize) private var appFontSize = AppFontSizing.defaultSize
 
     var body: some View {
         Text(text)
-            .font(WorkbenchFont.caption.weight(.medium))
+            .workbenchFont(.caption, weight: .medium)
             .foregroundStyle(WorkbenchColor.textPrimary)
             .multilineTextAlignment(.leading)
             .frame(maxWidth: 280, alignment: .leading)
@@ -157,5 +158,6 @@ private struct WorkbenchTooltipBubble: View {
                     .stroke(WorkbenchColor.divider, lineWidth: 1)
             }
             .accessibilityHidden(true)
+            .workbenchAppFontSize(appFontSize)
     }
 }

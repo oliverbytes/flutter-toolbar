@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 extension Notification.Name {
@@ -70,7 +71,7 @@ struct ConsoleToolbar: View {
                 .foregroundStyle(WorkbenchColor.textSecondary)
             TextField("Search console", text: $viewModel.searchText)
                 .textFieldStyle(.plain)
-                .font(WorkbenchFont.body)
+                .workbenchFont(.body)
                 .focused($searchFocused)
             if !viewModel.searchText.isEmpty {
                 Button {
@@ -150,7 +151,7 @@ private struct FilterChip: View {
     var body: some View {
         Button(action: action) {
             Label(type.label, systemImage: type.systemImage)
-                .font(WorkbenchFont.caption.weight(.medium))
+                .workbenchFont(.caption, weight: .medium)
                 .foregroundStyle(selected ? WorkbenchColor.textPrimary : WorkbenchColor.textSecondary)
                 .padding(.horizontal, WorkbenchSpacing.small)
                 .frame(minHeight: 32)
@@ -187,25 +188,12 @@ struct ConsolePanel: View {
                         description: Text("Change the search or enable another log type.")
                     )
                 } else {
-                    ScrollViewReader { proxy in
-                        ScrollView(.vertical) {
-                            LazyVStack(alignment: .leading, spacing: 2) {
-                                ForEach(viewModel.filteredLogs) { entry in
-                                    ConsoleRow(entry: entry, fontSize: consoleFontSize, showTimestamp: showTimestamps)
-                                        .id(entry.id)
-                                }
-                            }
-                            .padding(.horizontal, WorkbenchSpacing.medium)
-                            .padding(.vertical, WorkbenchSpacing.compact)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .onChange(of: viewModel.logLines.count) { _, _ in
-                            guard followOutput, let last = viewModel.filteredLogs.last else { return }
-                            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.18)) {
-                                proxy.scrollTo(last.id, anchor: .bottom)
-                            }
-                        }
-                    }
+                    SelectableConsoleTextView(
+                        entries: viewModel.filteredLogs,
+                        fontSize: consoleFontSize,
+                        showTimestamps: showTimestamps,
+                        followOutput: followOutput
+                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -214,49 +202,223 @@ struct ConsolePanel: View {
     }
 }
 
-private struct ConsoleRow: View {
-    let entry: LogEntry
+private struct SelectableConsoleTextView: NSViewRepresentable {
+    let entries: [LogEntry]
     let fontSize: CGFloat
-    let showTimestamp: Bool
+    let showTimestamps: Bool
+    let followOutput: Bool
 
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: WorkbenchSpacing.small) {
-            if showTimestamp {
-                Text(
-                    entry.timestamp,
-                    format: .dateTime
-                        .hour(.twoDigits(amPM: .omitted))
-                        .minute(.twoDigits)
-                        .second(.twoDigits)
-                        .secondFraction(.fractional(3))
-                        .locale(Locale(identifier: "en_US_POSIX"))
-                )
-                    .foregroundStyle(WorkbenchColor.textSecondary.opacity(0.78))
-                    .frame(width: 88, alignment: .leading)
-                    .lineLimit(1)
-            }
-
-            Image(systemName: entry.type.systemImage)
-                .font(.system(size: max(9, fontSize - 2), weight: .semibold))
-                .foregroundStyle(typeColor)
-                .frame(width: 16)
-
-            Text(entry.text)
-                .foregroundStyle(entry.type == .error ? WorkbenchColor.error : WorkbenchColor.textPrimary)
-                .textSelection(.enabled)
-        }
-        .font(WorkbenchFont.console(size: fontSize))
-        .padding(.vertical, 1)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(entry.type.label), \(entry.text)")
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
     }
 
-    private var typeColor: Color {
-        switch entry.type {
-        case .info: WorkbenchColor.textSecondary.opacity(0.5)
-        case .error: WorkbenchColor.error
-        case .command: WorkbenchColor.accent
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.borderType = .noBorder
+        scrollView.drawsBackground = false
+        scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
+
+        let textView = NSTextView()
+        textView.drawsBackground = false
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.isRichText = true
+        textView.allowsUndo = false
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticSpellingCorrectionEnabled = false
+        textView.isContinuousSpellCheckingEnabled = false
+        textView.textContainerInset = NSSize(
+            width: WorkbenchSpacing.medium,
+            height: WorkbenchSpacing.compact
+        )
+        textView.minSize = .zero
+        textView.maxSize = NSSize(
+            width: CGFloat.greatestFiniteMagnitude,
+            height: CGFloat.greatestFiniteMagnitude
+        )
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
+        textView.textContainer?.containerSize = NSSize(
+            width: scrollView.contentSize.width,
+            height: CGFloat.greatestFiniteMagnitude
+        )
+        textView.textContainer?.widthTracksTextView = true
+        textView.setAccessibilityLabel("Console output")
+
+        scrollView.documentView = textView
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? NSTextView else { return }
+        context.coordinator.update(
+            textView: textView,
+            in: scrollView,
+            entries: entries,
+            fontSize: fontSize,
+            showTimestamps: showTimestamps,
+            followOutput: followOutput
+        )
+    }
+
+    final class Coordinator {
+        private var renderedEntryIDs: [UUID] = []
+        private var renderedFontSize: CGFloat?
+        private var renderedShowTimestamps: Bool?
+
+        func update(
+            textView: NSTextView,
+            in scrollView: NSScrollView,
+            entries: [LogEntry],
+            fontSize: CGFloat,
+            showTimestamps: Bool,
+            followOutput: Bool
+        ) {
+            let entryIDs = entries.map(\.id)
+            let presentationUnchanged = renderedFontSize == fontSize
+                && renderedShowTimestamps == showTimestamps
+
+            guard entryIDs != renderedEntryIDs || !presentationUnchanged else { return }
+
+            let selectedRange = textView.selectedRange()
+            let visibleOrigin = scrollView.contentView.bounds.origin
+            let canAppend = presentationUnchanged
+                && !renderedEntryIDs.isEmpty
+                && entryIDs.count > renderedEntryIDs.count
+                && entryIDs.starts(with: renderedEntryIDs)
+
+            if canAppend {
+                let newEntries = entries.dropFirst(renderedEntryIDs.count)
+                let addition = ConsoleTextRenderer.attributedString(
+                    for: newEntries,
+                    fontSize: fontSize,
+                    showTimestamps: showTimestamps,
+                    includeLeadingNewline: true
+                )
+                textView.textStorage?.append(addition)
+            } else {
+                let content = ConsoleTextRenderer.attributedString(
+                    for: entries[...],
+                    fontSize: fontSize,
+                    showTimestamps: showTimestamps,
+                    includeLeadingNewline: false
+                )
+                textView.textStorage?.setAttributedString(content)
+            }
+
+            let textLength = textView.string.utf16.count
+            let selectionLocation = min(selectedRange.location, textLength)
+            let selectionLength = min(selectedRange.length, textLength - selectionLocation)
+            textView.setSelectedRange(NSRange(location: selectionLocation, length: selectionLength))
+
+            renderedEntryIDs = entryIDs
+            renderedFontSize = fontSize
+            renderedShowTimestamps = showTimestamps
+
+            if followOutput, selectedRange.length == 0 {
+                textView.scrollToEndOfDocument(nil)
+            } else if !canAppend {
+                scrollView.contentView.scroll(to: visibleOrigin)
+                scrollView.reflectScrolledClipView(scrollView.contentView)
+            }
         }
+    }
+}
+
+private enum ConsoleTextRenderer {
+    private static let timestampStyle = Date.FormatStyle.dateTime
+        .hour(.twoDigits(amPM: .omitted))
+        .minute(.twoDigits)
+        .second(.twoDigits)
+        .secondFraction(.fractional(3))
+        .locale(Locale(identifier: "en_US_POSIX"))
+
+    static func attributedString(
+        for entries: ArraySlice<LogEntry>,
+        fontSize: CGFloat,
+        showTimestamps: Bool,
+        includeLeadingNewline: Bool
+    ) -> NSAttributedString {
+        let result = NSMutableAttributedString()
+        let font = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        let symbolFont = NSFont.monospacedSystemFont(ofSize: max(9, fontSize - 2), weight: .semibold)
+        let prefixTemplate = showTimestamps ? "00:00:00.000  ●  " : "●  "
+        let wrappedLineIndent = (prefixTemplate as NSString).size(withAttributes: [.font: font]).width
+
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.headIndent = wrappedLineIndent
+        paragraphStyle.paragraphSpacing = 2
+
+        let baseAttributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: namedColor("WorkbenchTextPrimary", fallback: .labelColor),
+            .paragraphStyle: paragraphStyle,
+        ]
+
+        if includeLeadingNewline, !entries.isEmpty {
+            result.append(NSAttributedString(string: "\n", attributes: baseAttributes))
+        }
+
+        for (offset, entry) in entries.enumerated() {
+            if offset > 0 {
+                result.append(NSAttributedString(string: "\n", attributes: baseAttributes))
+            }
+
+            if showTimestamps {
+                let timestampAttributes = baseAttributes.merging([
+                    .foregroundColor: namedColor("WorkbenchTextSecondary", fallback: .secondaryLabelColor)
+                        .withAlphaComponent(0.78),
+                ]) { _, new in new }
+                result.append(NSAttributedString(
+                    string: entry.timestamp.formatted(timestampStyle) + "  ",
+                    attributes: timestampAttributes
+                ))
+            }
+
+            let symbolAttributes = baseAttributes.merging([
+                .font: symbolFont,
+                .foregroundColor: symbolColor(for: entry.type),
+            ]) { _, new in new }
+            result.append(NSAttributedString(
+                string: symbol(for: entry.type) + "  ",
+                attributes: symbolAttributes
+            ))
+
+            let messageAttributes = baseAttributes.merging([
+                .foregroundColor: entry.type == .error
+                    ? namedColor("WorkbenchError", fallback: .systemRed)
+                    : namedColor("WorkbenchTextPrimary", fallback: .labelColor),
+            ]) { _, new in new }
+            result.append(NSAttributedString(string: entry.text, attributes: messageAttributes))
+        }
+
+        return result
+    }
+
+    private static func symbol(for type: LogEntryType) -> String {
+        switch type {
+        case .info: "●"
+        case .error: "×"
+        case .command: "›"
+        }
+    }
+
+    private static func symbolColor(for type: LogEntryType) -> NSColor {
+        switch type {
+        case .info:
+            namedColor("WorkbenchTextSecondary", fallback: .secondaryLabelColor).withAlphaComponent(0.5)
+        case .error:
+            namedColor("WorkbenchError", fallback: .systemRed)
+        case .command:
+            namedColor("WorkbenchAccent", fallback: .controlAccentColor)
+        }
+    }
+
+    private static func namedColor(_ name: String, fallback: NSColor) -> NSColor {
+        NSColor(named: NSColor.Name(name)) ?? fallback
     }
 }
 
@@ -327,13 +489,14 @@ struct WorkbenchStatusBar: View {
         HStack(spacing: WorkbenchSpacing.small) {
             Circle().fill(statusColor).frame(width: 8, height: 8)
             Text(viewModel.status)
-                .font(WorkbenchFont.caption.weight(.medium))
+                .workbenchFont(.caption, weight: .medium)
                 .foregroundStyle(WorkbenchColor.textSecondary)
                 .lineLimit(1)
             Spacer()
             if !viewModel.logLines.isEmpty {
                 Text("\(viewModel.filteredLogs.count) of \(viewModel.logLines.count) lines")
-                    .font(WorkbenchFont.caption.monospacedDigit())
+                    .workbenchFont(.caption, design: .monospaced)
+                    .monospacedDigit()
                     .foregroundStyle(WorkbenchColor.textSecondary)
             }
 

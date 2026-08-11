@@ -6,6 +6,7 @@ struct ContentView: View {
     @AppStorage(PreferenceKeys.themeMode) private var themeMode = ThemeMode.system.rawValue
 
     private var selectedTheme: ThemeMode { ThemeMode(rawValue: themeMode) ?? .system }
+    private var nextTheme: ThemeMode { selectedTheme.next }
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -26,21 +27,19 @@ struct ContentView: View {
         .tint(WorkbenchColor.accent)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Menu {
-                    ForEach(ThemeMode.allCases, id: \.rawValue) { theme in
-                        Button {
-                            themeMode = theme.rawValue
-                        } label: {
-                            Label(theme.label, systemImage: selectedTheme == theme ? "checkmark" : theme.icon)
-                        }
-                    }
+                Button {
+                    themeMode = nextTheme.rawValue
                 } label: {
-                    Label("Appearance", systemImage: selectedTheme.icon)
+                    Label("Cycle Appearance", systemImage: selectedTheme.icon)
                         .labelStyle(.iconOnly)
                 }
-                .workbenchTooltip("Appearance: \(selectedTheme.label)", placement: .below)
-                .accessibilityLabel("Appearance")
+                .workbenchTooltip(
+                    "Appearance: \(selectedTheme.label) · Switch to \(nextTheme.label)",
+                    placement: .below
+                )
+                .accessibilityLabel("Cycle appearance")
                 .accessibilityValue(selectedTheme.label)
+                .accessibilityHint("Switches to \(nextTheme.label) appearance")
 
                 SettingsLink {
                     Label("Settings", systemImage: "gearshape")

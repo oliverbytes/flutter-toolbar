@@ -45,24 +45,18 @@ struct WorkbenchSidebar: View {
             Section("Run History") {
                 if viewModel.sessions.isEmpty {
                     Text("Runs appear here after they end.")
-                        .font(WorkbenchFont.caption)
+                        .workbenchFont(.caption)
                         .foregroundStyle(WorkbenchColor.textSecondary)
                         .padding(.vertical, WorkbenchSpacing.xs)
                 } else {
                     ForEach(viewModel.sessions) { session in
                         let isSelected = viewModel.selection == .session(session.id)
-                        Button {
-                            viewModel.selectWorkspace(.session(session.id))
-                        } label: {
-                            SidebarSessionRow(session: session)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .listRowBackground(SidebarSelectionBackground(isSelected: isSelected))
-                        .accessibilityAddTraits(isSelected ? .isSelected : [])
-                        .accessibilityValue(isSelected ? "Selected" : "Not selected")
-                        .help("Show run from \(session.startedAt.formatted(date: .abbreviated, time: .shortened))")
+                        SidebarSessionItem(
+                            session: session,
+                            isSelected: isSelected,
+                            onSelect: { viewModel.selectWorkspace(.session(session.id)) },
+                            onDelete: { viewModel.deleteSession(session) }
+                        )
                     }
                 }
             }
@@ -103,11 +97,11 @@ private struct SidebarProjectRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(project.displayName)
-                    .font(WorkbenchFont.body.weight(isCurrent ? .semibold : .regular))
+                    .workbenchFont(.body, weight: isCurrent ? .semibold : .regular)
                     .foregroundStyle(WorkbenchColor.textPrimary)
                     .lineLimit(1)
                 Text(project.path.abbreviatingWithTildeInPath)
-                    .font(WorkbenchFont.caption)
+                    .workbenchFont(.caption)
                     .foregroundStyle(WorkbenchColor.textSecondary)
                     .lineLimit(1)
             }
@@ -142,11 +136,11 @@ private struct SidebarSessionRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(session.projectName)
-                    .font(WorkbenchFont.body)
+                    .workbenchFont(.body)
                     .foregroundStyle(WorkbenchColor.textPrimary)
                     .lineLimit(1)
                 Text(session.startedAt, format: .relative(presentation: .named))
-                    .font(WorkbenchFont.caption)
+                    .workbenchFont(.caption)
                     .foregroundStyle(WorkbenchColor.textSecondary)
             }
         }
@@ -160,6 +154,48 @@ private struct SidebarSessionRow: View {
         case .stoppedByUser: WorkbenchColor.textSecondary
         case .failed: WorkbenchColor.error
         case .interrupted: WorkbenchColor.warning
+        }
+    }
+}
+
+private struct SidebarSessionItem: View {
+    let session: RunSession
+    let isSelected: Bool
+    let onSelect: () -> Void
+    let onDelete: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        HStack(spacing: WorkbenchSpacing.xs) {
+            Button(action: onSelect) {
+                SidebarSessionRow(session: session)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+            .accessibilityValue(isSelected ? "Selected" : "Not selected")
+            .help("Show run from \(session.startedAt.formatted(date: .abbreviated, time: .shortened))")
+
+            Button(role: .destructive, action: onDelete) {
+                Image(systemName: "trash")
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(WorkbenchColor.error)
+            .opacity(isHovered ? 1 : 0)
+            .allowsHitTesting(isHovered)
+            .accessibilityHidden(!isHovered)
+            .accessibilityLabel("Delete run")
+            .workbenchTooltip("Delete run")
+        }
+        .contentShape(Rectangle())
+        .onHover { isHovered = $0 }
+        .listRowBackground(SidebarSelectionBackground(isSelected: isSelected))
+        .contextMenu {
+            Button("Delete Run", role: .destructive, action: onDelete)
         }
     }
 }

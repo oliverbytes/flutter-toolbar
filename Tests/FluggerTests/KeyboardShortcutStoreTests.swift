@@ -47,6 +47,24 @@ final class KeyboardShortcutStoreTests: XCTestCase {
         XCTAssertNil(store.validationMessage)
     }
 
+    func testAppFontSizeShortcutsUseStandardBindings() {
+        XCTAssertEqual(
+            WorkbenchAction.increaseAppFontSize.defaultShortcut,
+            WorkbenchShortcut(key: .plus, modifiers: [.command])
+        )
+        XCTAssertEqual(
+            WorkbenchAction.decreaseAppFontSize.defaultShortcut,
+            WorkbenchShortcut(key: .minus, modifiers: [.command])
+        )
+    }
+
+    func testAppFontSizeChangesAreClamped() {
+        XCTAssertEqual(AppFontSizing.increased(AppFontSizing.maximumSize), AppFontSizing.maximumSize)
+        XCTAssertEqual(AppFontSizing.decreased(AppFontSizing.minimumSize), AppFontSizing.minimumSize)
+        XCTAssertEqual(AppFontSizing.increased(AppFontSizing.defaultSize), AppFontSizing.defaultSize + 1)
+        XCTAssertEqual(AppFontSizing.decreased(AppFontSizing.defaultSize), AppFontSizing.defaultSize - 1)
+    }
+
     private func makeDefaults() -> UserDefaults {
         let suiteName = "KeyboardShortcutStoreTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

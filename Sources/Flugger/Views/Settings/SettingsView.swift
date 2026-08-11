@@ -4,6 +4,7 @@ struct SettingsView: View {
     @ObservedObject var viewModel: WorkspaceViewModel
     @ObservedObject var keyboardShortcuts: KeyboardShortcutStore
     @AppStorage(PreferenceKeys.themeMode) private var themeMode = ThemeMode.system.rawValue
+    @AppStorage(PreferenceKeys.appFontSize) private var appFontSize = AppFontSizing.defaultSize
     @AppStorage(PreferenceKeys.consoleFontSize) private var consoleFontSize = 12.0
     @AppStorage(PreferenceKeys.showTimestamps) private var showTimestamps = true
     @AppStorage(PreferenceKeys.followOutput) private var followOutput = true
@@ -18,6 +19,19 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+
+                    HStack {
+                        Text("App Font Size")
+                        Slider(
+                            value: $appFontSize,
+                            in: AppFontSizing.minimumSize...AppFontSizing.maximumSize,
+                            step: AppFontSizing.step
+                        )
+                        Text("\(Int(appFontSize)) pt")
+                            .monospacedDigit()
+                            .foregroundStyle(WorkbenchColor.textSecondary)
+                            .frame(width: 42, alignment: .trailing)
+                    }
                 }
 
                 Section("Console") {
@@ -46,7 +60,7 @@ struct SettingsView: View {
                 Section("Run History") {
                     LabeledContent("Stored", value: "\(viewModel.sessions.count) of \(WorkspaceStore.sessionLimit)")
                     Text("Only project, device, configuration, timing, and outcome metadata is saved. Console text is never stored.")
-                        .font(WorkbenchFont.caption)
+                        .workbenchFont(.caption)
                         .foregroundStyle(WorkbenchColor.textSecondary)
                     Button("Clear Run History", role: .destructive, action: viewModel.clearHistory)
                         .disabled(viewModel.sessions.isEmpty)
@@ -59,6 +73,7 @@ struct SettingsView: View {
                 .tabItem { Label("Shortcuts", systemImage: "keyboard") }
         }
         .frame(width: 600, height: 500)
+        .workbenchAppFontSize(appFontSize)
         .tint(WorkbenchColor.accent)
     }
 }
@@ -86,10 +101,16 @@ private struct ShortcutSettingsView: View {
                 }
             }
 
+            Section("Appearance") {
+                ForEach(WorkbenchAction.appearanceActions) { action in
+                    ShortcutRow(action: action, keyboardShortcuts: keyboardShortcuts)
+                }
+            }
+
             if let validationMessage = keyboardShortcuts.validationMessage {
                 Section {
                     Label(validationMessage, systemImage: "exclamationmark.triangle.fill")
-                        .font(WorkbenchFont.caption)
+                        .workbenchFont(.caption)
                         .foregroundStyle(WorkbenchColor.error)
                 }
             }
@@ -137,7 +158,7 @@ private struct ShortcutRow: View {
                 }
             } label: {
                 Text(shortcut.displayName)
-                    .font(WorkbenchFont.body.monospaced())
+                    .workbenchFont(.body, design: .monospaced)
                     .foregroundStyle(WorkbenchColor.textPrimary)
                     .frame(minWidth: 62, minHeight: 32, alignment: .trailing)
             }

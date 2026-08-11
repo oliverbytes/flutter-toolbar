@@ -58,6 +58,19 @@ final class WorkspaceStoreTests: XCTestCase {
         XCTAssertFalse(persisted.contains("console"))
     }
 
+    func testRemovingSessionUpdatesAndPersistsHistory() throws {
+        let store = WorkspaceStore(directoryURL: temporaryDirectory)
+        let removedSession = makeSession(projectName: "Removed")
+        let retainedSession = makeSession(projectName: "Retained")
+        var snapshot = WorkspaceSnapshot(sessions: [removedSession, retainedSession])
+        try store.save(snapshot)
+
+        try store.removeSession(id: removedSession.id, from: &snapshot)
+
+        XCTAssertEqual(snapshot.sessions, [retainedSession])
+        XCTAssertEqual(try store.load().sessions, [retainedSession])
+    }
+
     func testSnapshotRoundTripsAtomically() throws {
         let store = WorkspaceStore(directoryURL: temporaryDirectory)
         var snapshot = WorkspaceSnapshot()
@@ -82,5 +95,19 @@ final class WorkspaceStoreTests: XCTestCase {
 
         XCTAssertEqual(snapshot.recentProjects.map(\.path), originalOrder)
         XCTAssertEqual(snapshot.recentProjects.last?.lastDeviceId, "updated-device")
+    }
+
+    private func makeSession(projectName: String) -> RunSession {
+        RunSession(
+            id: UUID(),
+            projectPath: "/tmp/\(projectName.lowercased())",
+            projectName: projectName,
+            deviceId: "device",
+            deviceName: "Device",
+            configurationName: "Debug",
+            startedAt: Date(timeIntervalSince1970: 10),
+            endedAt: Date(timeIntervalSince1970: 20),
+            outcome: .ended
+        )
     }
 }

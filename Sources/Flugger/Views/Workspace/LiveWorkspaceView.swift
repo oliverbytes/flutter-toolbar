@@ -107,11 +107,11 @@ private struct WorkbenchMenu<Content: View>: View {
                 Image(systemName: systemImage)
                     .foregroundStyle(WorkbenchColor.textSecondary.opacity(0.78))
                 Text(value)
-                    .font(WorkbenchFont.body.weight(.medium))
+                    .workbenchFont(.body, weight: .medium)
                     .foregroundStyle(WorkbenchColor.textPrimary)
                     .lineLimit(1)
                 Image(systemName: "chevron.down")
-                    .font(WorkbenchFont.caption)
+                    .workbenchFont(.caption)
                     .foregroundStyle(WorkbenchColor.textSecondary.opacity(0.7))
             }
             .frame(minWidth: 164, maxWidth: 240, minHeight: 44, alignment: .leading)

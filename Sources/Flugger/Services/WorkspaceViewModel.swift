@@ -420,6 +420,17 @@ final class WorkspaceViewModel: ObservableObject {
         }
     }
 
+    func deleteSession(_ session: RunSession) {
+        do {
+            try store.removeSession(id: session.id, from: &snapshot)
+            sessions = snapshot.sessions
+            if selection == .session(session.id) { selection = .console }
+            status = "Run deleted"
+        } catch {
+            status = "Could not delete run: \(error.localizedDescription)"
+        }
+    }
+
     static func validateProject(at path: String, fileManager: FileManager = .default) throws {
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue else {

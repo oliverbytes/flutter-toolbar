@@ -29,14 +29,57 @@ enum WorkbenchRadius {
     static let large: CGFloat = 14
 }
 
-enum WorkbenchFont {
-    static let display = Font.system(size: 22, weight: .bold)
-    static let heading = Font.system(size: 15, weight: .semibold)
-    static let body = Font.system(size: 13)
-    static let caption = Font.system(size: 11)
+enum WorkbenchTextStyle {
+    case display
+    case heading
+    case body
+    case caption
 
-    static func console(size: CGFloat) -> Font {
-        .system(size: size, weight: .regular, design: .monospaced)
+    fileprivate var baseSize: CGFloat {
+        switch self {
+        case .display: 22
+        case .heading: 15
+        case .body: 13
+        case .caption: 11
+        }
+    }
+
+    fileprivate var defaultWeight: Font.Weight {
+        switch self {
+        case .display: .bold
+        case .heading: .semibold
+        case .body, .caption: .regular
+        }
+    }
+}
+
+private struct WorkbenchAppFontSizeKey: EnvironmentKey {
+    static let defaultValue = CGFloat(AppFontSizing.defaultSize)
+}
+
+extension EnvironmentValues {
+    fileprivate var workbenchAppFontSize: CGFloat {
+        get { self[WorkbenchAppFontSizeKey.self] }
+        set { self[WorkbenchAppFontSizeKey.self] = newValue }
+    }
+}
+
+private struct WorkbenchFontModifier: ViewModifier {
+    @Environment(\.workbenchAppFontSize) private var appFontSize
+
+    let style: WorkbenchTextStyle
+    let weight: Font.Weight?
+    let design: Font.Design
+
+    func body(content: Content) -> some View {
+        let scale = appFontSize / CGFloat(AppFontSizing.defaultSize)
+        content.font(
+            .system(
+                size: style.baseSize * scale,
+                weight: weight ?? style.defaultWeight,
+                design: design
+            )
+        )
     }
 }
 
@@ -45,7 +88,7 @@ struct WorkbenchPrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(WorkbenchFont.body.weight(.semibold))
+            .workbenchFont(.body, weight: .semibold)
             .foregroundStyle(isEnabled ? WorkbenchColor.textPrimary : WorkbenchColor.textSecondary)
             .frame(minWidth: 88, minHeight: 44)
             .background(
@@ -88,6 +131,20 @@ private struct WorkbenchTooltipModifier: ViewModifier {
 }
 
 extension View {
+    func workbenchAppFontSize(_ size: Double) -> some View {
+        let clampedSize = AppFontSizing.clamped(size)
+        return environment(\.workbenchAppFontSize, CGFloat(clampedSize))
+            .font(.system(size: CGFloat(clampedSize)))
+    }
+
+    func workbenchFont(
+        _ style: WorkbenchTextStyle,
+        weight: Font.Weight? = nil,
+        design: Font.Design = .default
+    ) -> some View {
+        modifier(WorkbenchFontModifier(style: style, weight: weight, design: design))
+    }
+
     func workbenchTooltip(
         _ text: String,
         placement: WorkbenchTooltipPlacement = .above

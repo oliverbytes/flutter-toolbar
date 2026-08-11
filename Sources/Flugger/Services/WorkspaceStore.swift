@@ -68,6 +68,11 @@ final class WorkspaceStore {
         try save(snapshot)
     }
 
+    func removeSession(id: UUID, from snapshot: inout WorkspaceSnapshot) throws {
+        snapshot.sessions.removeAll { $0.id == id }
+        try save(snapshot)
+    }
+
     func clearHistory(in snapshot: inout WorkspaceSnapshot) throws {
         snapshot.sessions.removeAll()
         try save(snapshot)

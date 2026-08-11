@@ -11,6 +11,8 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
     case copyVisibleOutput
     case exportVisibleOutput
     case clearConsole
+    case increaseAppFontSize
+    case decreaseAppFontSize
 
     var id: String { rawValue }
 
@@ -26,6 +28,8 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
         case .copyVisibleOutput: "Copy Visible Output"
         case .exportVisibleOutput: "Export Visible Output"
         case .clearConsole: "Clear Console"
+        case .increaseAppFontSize: "Increase App Font Size"
+        case .decreaseAppFontSize: "Decrease App Font Size"
         }
     }
 
@@ -37,6 +41,7 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
         .exportVisibleOutput,
         .clearConsole,
     ]
+    static let appearanceActions: [WorkbenchAction] = [.increaseAppFontSize, .decreaseAppFontSize]
 }
 
 enum ShortcutModifier: String, CaseIterable, Codable, Identifiable {
@@ -96,6 +101,8 @@ enum ShortcutKey: String, CaseIterable, Codable, Identifiable {
     case semicolon = ";"
     case openBracket = "["
     case closeBracket = "]"
+    case minus = "-"
+    case plus = "+"
     case returnKey = "return"
     case space = "space"
 
@@ -127,7 +134,16 @@ enum ShortcutKey: String, CaseIterable, Codable, Identifiable {
 
     static let letters = allCases.filter { $0.rawValue.count == 1 && $0.rawValue.first?.isLetter == true }
     static let numbers = allCases.filter { $0.rawValue.count == 1 && $0.rawValue.first?.isNumber == true }
-    static let symbols: [ShortcutKey] = [.period, .comma, .slash, .semicolon, .openBracket, .closeBracket]
+    static let symbols: [ShortcutKey] = [
+        .period,
+        .comma,
+        .slash,
+        .semicolon,
+        .openBracket,
+        .closeBracket,
+        .minus,
+        .plus,
+    ]
     static let special: [ShortcutKey] = [.returnKey, .space]
 }
 
@@ -177,6 +193,10 @@ extension WorkbenchAction {
             WorkbenchShortcut(key: .e, modifiers: [.command, .shift])
         case .clearConsole:
             WorkbenchShortcut(key: .k, modifiers: [.command])
+        case .increaseAppFontSize:
+            WorkbenchShortcut(key: .plus, modifiers: [.command])
+        case .decreaseAppFontSize:
+            WorkbenchShortcut(key: .minus, modifiers: [.command])
         }
     }
 }

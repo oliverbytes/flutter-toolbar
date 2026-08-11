@@ -28,6 +28,14 @@ enum ThemeMode: String, CaseIterable {
         case .dark: .dark
         }
     }
+
+    var next: ThemeMode {
+        switch self {
+        case .system: .light
+        case .light: .dark
+        case .dark: .system
+        }
+    }
 }
 
 @main
@@ -35,6 +43,7 @@ struct FluggerApp: App {
     @StateObject private var viewModel = WorkspaceViewModel()
     @StateObject private var keyboardShortcuts = KeyboardShortcutStore()
     @AppStorage(PreferenceKeys.themeMode) private var themeMode = ThemeMode.system.rawValue
+    @AppStorage(PreferenceKeys.appFontSize) private var appFontSize = AppFontSizing.defaultSize
 
     private var selectedTheme: ThemeMode { ThemeMode(rawValue: themeMode) ?? .system }
 
@@ -43,6 +52,7 @@ struct FluggerApp: App {
             ContentView(viewModel: viewModel)
                 .frame(minWidth: 820, minHeight: 520)
                 .preferredColorScheme(selectedTheme.colorScheme)
+                .workbenchAppFontSize(appFontSize)
                 .environmentObject(keyboardShortcuts)
         }
         .defaultSize(width: 1120, height: 1440)
@@ -50,12 +60,17 @@ struct FluggerApp: App {
         .commands {
             CommandGroup(replacing: .newItem) { }
             SidebarCommands()
-            WorkbenchCommands(viewModel: viewModel, keyboardShortcuts: keyboardShortcuts)
+            WorkbenchCommands(
+                viewModel: viewModel,
+                keyboardShortcuts: keyboardShortcuts,
+                appFontSize: $appFontSize
+            )
         }
 
         Settings {
             SettingsView(viewModel: viewModel, keyboardShortcuts: keyboardShortcuts)
                 .preferredColorScheme(selectedTheme.colorScheme)
+                .workbenchAppFontSize(appFontSize)
         }
     }
 }
@@ -63,8 +78,25 @@ struct FluggerApp: App {
 private struct WorkbenchCommands: Commands {
     @ObservedObject var viewModel: WorkspaceViewModel
     @ObservedObject var keyboardShortcuts: KeyboardShortcutStore
+    @Binding var appFontSize: Double
 
     var body: some Commands {
+        CommandGroup(after: .sidebar) {
+            Divider()
+
+            Button("Increase App Font Size") {
+                appFontSize = AppFontSizing.increased(appFontSize)
+            }
+            .workbenchShortcut(keyboardShortcuts.binding(for: .increaseAppFontSize))
+            .disabled(appFontSize >= AppFontSizing.maximumSize)
+
+            Button("Decrease App Font Size") {
+                appFontSize = AppFontSizing.decreased(appFontSize)
+            }
+            .workbenchShortcut(keyboardShortcuts.binding(for: .decreaseAppFontSize))
+            .disabled(appFontSize <= AppFontSizing.minimumSize)
+        }
+
         CommandMenu("Project") {
             Button("Pub Get", systemImage: "shippingbox.fill", action: viewModel.pubGet)
                 .workbenchShortcut(keyboardShortcuts.binding(for: .pubGet))

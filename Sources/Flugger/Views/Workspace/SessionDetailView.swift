@@ -13,10 +13,10 @@ struct SessionDetailView: View {
 
                     VStack(alignment: .leading, spacing: WorkbenchSpacing.xs) {
                         Text(session.projectName)
-                            .font(WorkbenchFont.display)
+                            .workbenchFont(.display)
                             .foregroundStyle(WorkbenchColor.textPrimary)
                         Text("Run \(session.outcome.label.lowercased()) \(session.endedAt.formatted(.relative(presentation: .named)))")
-                            .font(WorkbenchFont.body)
+                            .workbenchFont(.body)
                             .foregroundStyle(WorkbenchColor.textSecondary)
                     }
                 }
@@ -37,9 +37,9 @@ struct SessionDetailView: View {
                         .foregroundStyle(WorkbenchColor.accent)
                     VStack(alignment: .leading, spacing: WorkbenchSpacing.xs) {
                         Text("Console output was not stored")
-                            .font(WorkbenchFont.heading)
+                            .workbenchFont(.heading)
                         Text("Flugger keeps session metadata only. Console text remains in memory during the current app launch and is discarded when Flugger quits.")
-                            .font(WorkbenchFont.body)
+                            .workbenchFont(.body)
                             .foregroundStyle(WorkbenchColor.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -73,11 +73,11 @@ private struct SessionMetadataRow: View {
     var body: some View {
         GridRow {
             Text(label.uppercased())
-                .font(WorkbenchFont.caption.weight(.semibold))
+                .workbenchFont(.caption, weight: .semibold)
                 .foregroundStyle(WorkbenchColor.textSecondary)
                 .gridColumnAlignment(.trailing)
             Text(value)
-                .font(WorkbenchFont.body)
+                .workbenchFont(.body)
                 .foregroundStyle(WorkbenchColor.textPrimary)
                 .textSelection(.enabled)
         }

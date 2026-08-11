@@ -2,9 +2,29 @@ import Foundation
 
 enum PreferenceKeys {
     static let themeMode = "themeMode"
+    static let appFontSize = "appFontSize"
     static let consoleFontSize = "fontSize"
     static let showTimestamps = "showTimestamps"
     static let followOutput = "followOutput"
+}
+
+enum AppFontSizing {
+    static let defaultSize = 13.0
+    static let minimumSize = 11.0
+    static let maximumSize = 18.0
+    static let step = 1.0
+
+    static func clamped(_ size: Double) -> Double {
+        min(max(size, minimumSize), maximumSize)
+    }
+
+    static func increased(_ size: Double) -> Double {
+        clamped(size + step)
+    }
+
+    static func decreased(_ size: Double) -> Double {
+        clamped(size - step)
+    }
 }
 
 @MainActor
