@@ -7,6 +7,8 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
     case stop
     case hotReload
     case hotRestart
+    case showConsole
+    case showOutput
     case focusConsoleSearch
     case copyVisibleOutput
     case exportVisibleOutput
@@ -32,10 +34,12 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
         case .stop: "Stop"
         case .hotReload: "Hot Reload"
         case .hotRestart: "Hot Restart"
-        case .focusConsoleSearch: "Focus Console Search"
+        case .showConsole: "Show Console"
+        case .showOutput: "Show Output"
+        case .focusConsoleSearch: "Focus Log Search"
         case .copyVisibleOutput: "Copy Visible Output"
         case .exportVisibleOutput: "Export Visible Output"
-        case .clearConsole: "Clear Console"
+        case .clearConsole: "Clear Current Log"
         case .toggleTerminal: "Toggle Terminal"
         case .showConsole: "Show Console"
         case .showSourceControl: "Show Source Control"
@@ -51,7 +55,9 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
 
     static let projectActions: [WorkbenchAction] = [.pubGet, .cleanAndPubGet]
     static let runActions: [WorkbenchAction] = [.run, .stop, .hotReload, .hotRestart]
-    static let consoleActions: [WorkbenchAction] = [
+    static let logActions: [WorkbenchAction] = [
+        .showConsole,
+        .showOutput,
         .focusConsoleSearch,
         .copyVisibleOutput,
         .exportVisibleOutput,
@@ -213,6 +219,10 @@ extension WorkbenchAction {
             WorkbenchShortcut(key: .r, modifiers: [.command])
         case .hotRestart:
             WorkbenchShortcut(key: .r, modifiers: [.command, .shift])
+        case .showConsole:
+            WorkbenchShortcut(key: .one, modifiers: [.command, .shift])
+        case .showOutput:
+            WorkbenchShortcut(key: .two, modifiers: [.command, .shift])
         case .focusConsoleSearch:
             WorkbenchShortcut(key: .f, modifiers: [.command])
         case .copyVisibleOutput:

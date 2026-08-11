@@ -19,10 +19,18 @@ final class WorkspaceViewModel: ObservableObject {
     @Published private(set) var sessions: [RunSession] = []
     @Published private(set) var projectRunStates: [String: AppState] = [:]
     @Published var selection: WorkspaceSelection = .console
-    @Published var searchText = ""
-    @Published var enabledLogTypes = Set(LogEntryType.allCases)
+    @Published private(set) var selectedLogChannel: LogChannel = .console
+    @Published private var searchTextByChannel: [LogChannel: String] = [
+        .console: "",
+        .output: "",
+    ]
+    @Published private var enabledLogTypesByChannel: [LogChannel: Set<LogEntryType>] = [
+        .console: Set(LogEntryType.allCases),
+        .output: Set(LogEntryType.allCases),
+    ]
     @Published var isCleanConfirmationPresented = false
     @Published private(set) var isProjectMaintenanceRunning = false
+    @Published private(set) var activeMaintenanceProjectPath: String?
 
     let terminalWorkspaces: TerminalWorkspaceManager
 
@@ -36,10 +44,15 @@ final class WorkspaceViewModel: ObservableObject {
     private var projectStatuses: [String: String] = [:]
     private var daemonCancellables = Set<AnyCancellable>()
     private var activeRunsByProject: [String: ActiveRun] = [:]
-    private var logsByProject: [String: [LogEntry]] = [:]
-    private var rolledOverLogKeys: Set<String> = []
+    private var logsByBuffer: [LogBufferKey: [LogEntry]] = [:]
+    private var rolledOverLogKeys: Set<LogBufferKey> = []
 
     private static let unscopedLogKey = "__flugger_unscoped__"
+
+    private struct LogBufferKey: Hashable {
+        let projectKey: String
+        let channel: LogChannel
+    }
 
     private struct ActiveRun {
         let id: UUID
@@ -131,8 +144,21 @@ final class WorkspaceViewModel: ObservableObject {
         return sessions.first { $0.id == id }
     }
 
+    var searchText: String {
+        get { searchTextByChannel[selectedLogChannel] ?? "" }
+        set { searchTextByChannel[selectedLogChannel] = newValue }
+    }
+
+    var enabledLogTypes: Set<LogEntryType> {
+        enabledLogTypesByChannel[selectedLogChannel] ?? Set(LogEntryType.allCases)
+    }
+
     var filteredLogs: [LogEntry] {
         ConsoleLogTools.filter(logLines, query: searchText, enabledTypes: enabledLogTypes)
+    }
+
+    var isCurrentProjectMaintenanceRunning: Bool {
+        isProjectMaintenanceRunning && activeMaintenanceProjectPath == projectPath
     }
 
     var runBlockReason: String? {
@@ -198,11 +224,12 @@ final class WorkspaceViewModel: ObservableObject {
         let configs = parsedConfigs.isEmpty ? LaunchConfig.defaultConfigs() : parsedConfigs
         let existing = recentProjects.first { $0.path == path }
 
-        let isFirstProjectLog = logsByProject[path]?.isEmpty ?? true
+        let consoleKey = LogBufferKey(projectKey: path, channel: .console)
+        let isFirstProjectLog = logsByBuffer[consoleKey]?.isEmpty ?? true
         projectPath = path
         projectName = name
         launchConfigs = configs
-        logLines = logsByProject[path] ?? []
+        refreshVisibleLogs()
 
         let preferredConfig = existing?.lastConfigurationName ?? UserDefaultsStore.shared.lastLaunchConfigName
         selectedLaunchConfigName = preferredConfig.flatMap { preferred in
@@ -290,6 +317,8 @@ final class WorkspaceViewModel: ObservableObject {
     func runApp() {
         guard canRun, let projectPath, let device = selectedDevice else { return }
 
+        showLiveLogs(.console, for: projectPath)
+
         let configName = selectedLaunchConfig?.displayName ?? "Debug"
         let runID = UUID()
         activeRunsByProject[projectPath] = ActiveRun(
@@ -338,13 +367,15 @@ final class WorkspaceViewModel: ObservableObject {
     }
 
     func hotReload() {
-        guard let projectPath else { return }
-        runnersByProject[projectPath]?.hotReload()
+        guard let projectPath, let runner = runnersByProject[projectPath] else { return }
+        showLiveLogs(.console, for: projectPath)
+        runner.hotReload()
     }
 
     func hotRestart() {
-        guard let projectPath else { return }
-        runnersByProject[projectPath]?.hotRestart()
+        guard let projectPath, let runner = runnersByProject[projectPath] else { return }
+        showLiveLogs(.console, for: projectPath)
+        runner.hotRestart()
     }
 
     func requestCleanAndPubGet() {
@@ -361,24 +392,33 @@ final class WorkspaceViewModel: ObservableObject {
         performProjectMaintenance(.cleanAndPubGet)
     }
 
+    func selectLogChannel(_ channel: LogChannel) {
+        guard selectedLogChannel != channel else { return }
+        selectedLogChannel = channel
+        refreshVisibleLogs()
+    }
+
     func clearLogs() {
-        let key = activeLogKey
-        logsByProject[key] = []
+        let key = activeLogBufferKey
+        logsByBuffer[key] = []
         rolledOverLogKeys.remove(key)
         logLines = []
+        let message = "\(selectedLogChannel.label) cleared"
         if let projectPath {
-            updateStatus("Console cleared", for: projectPath)
+            updateStatus(message, for: projectPath)
         } else {
-            status = "Console cleared"
+            status = message
         }
     }
 
     func toggleFilter(_ type: LogEntryType) {
-        if enabledLogTypes.contains(type) {
-            enabledLogTypes.remove(type)
+        var enabledTypes = enabledLogTypes
+        if enabledTypes.contains(type) {
+            enabledTypes.remove(type)
         } else {
-            enabledLogTypes.insert(type)
+            enabledTypes.insert(type)
         }
+        enabledLogTypesByChannel[selectedLogChannel] = enabledTypes
     }
 
     func copyVisibleLogs() {
@@ -389,7 +429,7 @@ final class WorkspaceViewModel: ObservableObject {
         }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
-        status = "Copied \(filteredLogs.count) console lines"
+        status = "Copied \(filteredLogs.count) \(selectedLogChannel.label.lowercased()) lines"
     }
 
     func exportVisibleLogs() {
@@ -402,14 +442,15 @@ final class WorkspaceViewModel: ObservableObject {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.plainText]
         panel.canCreateDirectories = true
-        panel.nameFieldStringValue = "\(projectName)-console.log"
+        panel.nameFieldStringValue = "\(projectName)-\(selectedLogChannel.rawValue).log"
         panel.prompt = "Export"
+        let channelName = selectedLogChannel.label.lowercased()
         panel.begin { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
             let text = ConsoleLogTools.exportText(entries)
             do {
                 try text.write(to: url, atomically: true, encoding: .utf8)
-                Task { @MainActor in self?.status = "Exported \(entries.count) console lines" }
+                Task { @MainActor in self?.status = "Exported \(entries.count) \(channelName) lines" }
             } catch {
                 Task { @MainActor in self?.status = "Export failed: \(error.localizedDescription)" }
             }
@@ -584,34 +625,61 @@ final class WorkspaceViewModel: ObservableObject {
             return
         }
 
+        showLiveLogs(.output, for: projectPath)
         isProjectMaintenanceRunning = true
+        activeMaintenanceProjectPath = projectPath
         updateStatus("Running \(operation.displayName)…", for: projectPath)
+        let startedAt = Date.now.formatted(date: .abbreviated, time: .standard)
+        addLog(
+            "\(operation.displayName) — \(projectName) — \(startedAt)",
+            type: .command,
+            projectPath: projectPath,
+            channel: .output
+        )
         let started = projectMaintenance.run(
             operation,
             projectPath: projectPath,
             onOutput: { [weak self] message, type in
-                self?.addLog(message, type: type, projectPath: projectPath)
+                self?.addLog(message, type: type, projectPath: projectPath, channel: .output)
             },
             completion: { [weak self] outcome in
                 guard let self else { return }
                 self.isProjectMaintenanceRunning = false
+                self.activeMaintenanceProjectPath = nil
                 switch outcome {
                 case .succeeded:
                     self.updateStatus("\(operation.displayName) completed", for: projectPath)
-                    self.addLog("\(operation.displayName) completed", type: .info, projectPath: projectPath)
+                    self.addLog(
+                        "\(operation.displayName) completed",
+                        type: .info,
+                        projectPath: projectPath,
+                        channel: .output
+                    )
                 case let .failed(command, exitCode):
                     self.updateStatus("\(operation.displayName) failed", for: projectPath)
-                    self.addLog("\(command) exited with code \(exitCode)", type: .error, projectPath: projectPath)
+                    self.addLog(
+                        "\(command) exited with code \(exitCode)",
+                        type: .error,
+                        projectPath: projectPath,
+                        channel: .output
+                    )
                 case let .launchFailed(message):
                     self.updateStatus("Could not start \(operation.displayName)", for: projectPath)
-                    self.addLog(message, type: .error, projectPath: projectPath)
+                    self.addLog(message, type: .error, projectPath: projectPath, channel: .output)
                 }
             }
         )
 
         if !started {
             isProjectMaintenanceRunning = false
+            activeMaintenanceProjectPath = nil
             updateStatus("Project maintenance is already in progress.", for: projectPath)
+            addLog(
+                "Project maintenance is already in progress.",
+                type: .error,
+                projectPath: projectPath,
+                channel: .output
+            )
         }
     }
 
@@ -622,61 +690,82 @@ final class WorkspaceViewModel: ObservableObject {
         }
     }
 
+    private func showLiveLogs(_ channel: LogChannel, for projectPath: String) {
+        selection = .project(projectPath)
+        selectLogChannel(channel)
+    }
+
     func addLog(
         _ message: String,
         type: LogEntryType = .info,
-        projectPath targetProjectPath: String? = nil
+        projectPath targetProjectPath: String? = nil,
+        channel: LogChannel = .console
     ) {
-        let key = targetProjectPath ?? activeLogKey
-        var entries = logsByProject[key] ?? []
+        let key = LogBufferKey(
+            projectKey: targetProjectPath ?? activeProjectLogKey,
+            channel: channel
+        )
+        var entries = logsByBuffer[key] ?? []
 
         if entries.count >= Self.maximumLogEntries {
             entries.removeFirst(entries.count - Self.maximumLogEntries + 1)
             if !rolledOverLogKeys.contains(key) {
                 rolledOverLogKeys.insert(key)
-                entries.append(LogEntry(text: "Older console output was removed after reaching 10,000 lines.", type: .info))
+                entries.append(LogEntry(text: rolloverMessage(for: key), type: .info))
                 if entries.count >= Self.maximumLogEntries { entries.removeFirst() }
             }
         }
         entries.append(LogEntry(text: message, type: type))
-        logsByProject[key] = entries
+        logsByBuffer[key] = entries
         trimLogBuffersToGlobalLimit()
 
-        logLines = logsByProject[activeLogKey] ?? []
+        refreshVisibleLogs()
     }
 
-    private var activeLogKey: String {
+    private var activeProjectLogKey: String {
         projectPath ?? Self.unscopedLogKey
     }
 
+    private var activeLogBufferKey: LogBufferKey {
+        LogBufferKey(projectKey: activeProjectLogKey, channel: selectedLogChannel)
+    }
+
+    private func refreshVisibleLogs() {
+        logLines = logsByBuffer[activeLogBufferKey] ?? []
+    }
+
     private func trimLogBuffersToGlobalLimit() {
-        var affectedKeys: Set<String> = []
+        var affectedKeys: Set<LogBufferKey> = []
 
         while totalLogCount > Self.maximumLogEntries, let key = oldestLogKey {
-            logsByProject[key]?.removeFirst()
+            logsByBuffer[key]?.removeFirst()
             affectedKeys.insert(key)
         }
 
         for key in affectedKeys where !rolledOverLogKeys.contains(key) {
             rolledOverLogKeys.insert(key)
-            logsByProject[key, default: []].append(
-                LogEntry(text: "Older console output was removed after reaching 10,000 lines.", type: .info)
+            logsByBuffer[key, default: []].append(
+                LogEntry(text: rolloverMessage(for: key), type: .info)
             )
         }
 
         while totalLogCount > Self.maximumLogEntries, let key = oldestLogKey {
-            logsByProject[key]?.removeFirst()
+            logsByBuffer[key]?.removeFirst()
         }
     }
 
     private var totalLogCount: Int {
-        logsByProject.values.reduce(0) { $0 + $1.count }
+        logsByBuffer.values.reduce(0) { $0 + $1.count }
     }
 
-    private var oldestLogKey: String? {
-        logsByProject
+    private var oldestLogKey: LogBufferKey? {
+        logsByBuffer
             .compactMap { key, entries in entries.first.map { (key, $0.timestamp) } }
             .min { $0.1 < $1.1 }?
             .0
+    }
+
+    private func rolloverMessage(for key: LogBufferKey) -> String {
+        "Older \(key.channel.label.lowercased()) output was removed after reaching 10,000 lines."
     }
 }

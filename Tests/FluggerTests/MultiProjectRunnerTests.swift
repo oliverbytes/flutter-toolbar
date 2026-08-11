@@ -31,10 +31,13 @@ final class MultiProjectRunnerTests: XCTestCase {
 
         try viewModel.openProject(at: first.path)
         viewModel.selectDevice(testDevice.id)
+        viewModel.selectLogChannel(.output)
         viewModel.runApp()
 
         XCTAssertTrue(viewModel.isAppRunning)
         XCTAssertTrue(viewModel.isProjectRunning(first.path))
+        XCTAssertEqual(viewModel.selectedLogChannel, .console)
+        XCTAssertEqual(viewModel.selection, .project(first.path))
 
         try viewModel.openProject(at: second.path)
         viewModel.selectDevice(testDevice.id)
@@ -50,10 +53,23 @@ final class MultiProjectRunnerTests: XCTestCase {
         XCTAssertEqual(runners.count, 2)
 
         viewModel.selectWorkspace(.project(first.path))
+        viewModel.selectLogChannel(.output)
         viewModel.hotReload()
+
+        XCTAssertEqual(viewModel.selectedLogChannel, .console)
+        XCTAssertEqual(viewModel.selection, .project(first.path))
+
+        viewModel.selectLogChannel(.output)
+        viewModel.selection = .session(UUID())
+        viewModel.hotRestart()
+
+        XCTAssertEqual(viewModel.selectedLogChannel, .console)
+        XCTAssertEqual(viewModel.selection, .project(first.path))
+
         viewModel.stopApp()
 
         XCTAssertEqual(runners[first.path]?.hotReloadCount, 1)
+        XCTAssertEqual(runners[first.path]?.hotRestartCount, 1)
         XCTAssertEqual(runners[first.path]?.stopCount, 1)
         XCTAssertEqual(runners[second.path]?.stopCount, 0)
         XCTAssertFalse(viewModel.isProjectRunning(first.path))
@@ -97,6 +113,7 @@ final class MultiProjectRunnerTests: XCTestCase {
 private final class MockFlutterRunner: FlutterRunner {
     private(set) var stopCount = 0
     private(set) var hotReloadCount = 0
+    private(set) var hotRestartCount = 0
 
     override func start(with launchConfig: LaunchConfig? = nil) {
         appState = .starting
@@ -118,5 +135,10 @@ private final class MockFlutterRunner: FlutterRunner {
     override func hotReload() {
         hotReloadCount += 1
         status = "Hot reloading..."
+    }
+
+    override func hotRestart() {
+        hotRestartCount += 1
+        status = "Hot restarting..."
     }
 }

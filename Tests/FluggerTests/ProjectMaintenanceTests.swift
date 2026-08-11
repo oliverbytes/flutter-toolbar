@@ -38,10 +38,106 @@ final class ProjectMaintenanceTests: XCTestCase {
             try? FileManager.default.removeItem(at: context.root)
         }
 
+        context.viewModel.selection = .session(UUID())
         context.viewModel.pubGet()
 
         XCTAssertEqual(context.maintenance.operations, [.pubGet])
         XCTAssertFalse(context.viewModel.isCleanConfirmationPresented)
+        XCTAssertEqual(context.viewModel.selectedLogChannel, .output)
+        XCTAssertEqual(context.viewModel.selection, .project(context.viewModel.projectPath ?? ""))
+    }
+
+    func testMaintenanceStreamsOnlyToOutputAndLeavesItSelected() throws {
+        let legacyPreferences = LegacyPreferencesSnapshot()
+        let context = try makeContext()
+        defer {
+            legacyPreferences.restore()
+            try? FileManager.default.removeItem(at: context.root)
+        }
+
+        context.viewModel.addLog("Runner console line")
+        context.viewModel.pubGet()
+        context.maintenance.emit("Resolving dependencies…", type: .command)
+        context.maintenance.emit("Downloaded package", type: .info)
+        context.maintenance.finish(.succeeded)
+
+        XCTAssertEqual(context.viewModel.selectedLogChannel, .output)
+        XCTAssertTrue(context.viewModel.logLines.contains { $0.text.contains("Pub Get — Demo —") })
+        XCTAssertTrue(context.viewModel.logLines.contains { $0.text == "Resolving dependencies…" })
+        XCTAssertTrue(context.viewModel.logLines.contains { $0.text == "Downloaded package" })
+        XCTAssertTrue(context.viewModel.logLines.contains { $0.text == "Pub Get completed" })
+
+        context.viewModel.selectLogChannel(.console)
+
+        XCTAssertTrue(context.viewModel.logLines.contains { $0.text == "Runner console line" })
+        XCTAssertFalse(context.viewModel.logLines.contains { $0.text == "Resolving dependencies…" })
+        XCTAssertFalse(context.viewModel.logLines.contains { $0.text == "Pub Get completed" })
+    }
+
+    func testRepeatedRunsAppendHeadersAndFailureDetails() throws {
+        let legacyPreferences = LegacyPreferencesSnapshot()
+        let context = try makeContext()
+        defer {
+            legacyPreferences.restore()
+            try? FileManager.default.removeItem(at: context.root)
+        }
+
+        context.viewModel.pubGet()
+        context.maintenance.finish(.succeeded)
+        context.viewModel.pubGet()
+        context.maintenance.finish(.failed(command: "flutter pub get", exitCode: 65))
+
+        XCTAssertEqual(
+            context.viewModel.logLines.filter { $0.text.contains("Pub Get — Demo —") }.count,
+            2
+        )
+        XCTAssertTrue(context.viewModel.logLines.contains {
+            $0.text == "flutter pub get exited with code 65" && $0.type == .error
+        })
+        XCTAssertEqual(context.viewModel.status, "Pub Get failed")
+        XCTAssertEqual(context.viewModel.selectedLogChannel, .output)
+    }
+
+    func testLaunchFailureIsVisibleInOutput() throws {
+        let legacyPreferences = LegacyPreferencesSnapshot()
+        let context = try makeContext()
+        defer {
+            legacyPreferences.restore()
+            try? FileManager.default.removeItem(at: context.root)
+        }
+
+        context.viewModel.cleanAndPubGet()
+        context.maintenance.finish(.launchFailed("flutter executable not found"))
+
+        XCTAssertEqual(context.viewModel.status, "Could not start Clean + Pub Get")
+        XCTAssertTrue(context.viewModel.logLines.contains {
+            $0.text == "flutter executable not found" && $0.type == .error
+        })
+    }
+
+    func testSearchAndFiltersAreIndependentPerChannel() throws {
+        let legacyPreferences = LegacyPreferencesSnapshot()
+        let context = try makeContext()
+        defer {
+            legacyPreferences.restore()
+            try? FileManager.default.removeItem(at: context.root)
+        }
+
+        context.viewModel.searchText = "console query"
+        context.viewModel.toggleFilter(.error)
+        context.viewModel.selectLogChannel(.output)
+        context.viewModel.searchText = "output query"
+        context.viewModel.toggleFilter(.info)
+
+        XCTAssertEqual(context.viewModel.searchText, "output query")
+        XCTAssertFalse(context.viewModel.enabledLogTypes.contains(.info))
+        XCTAssertTrue(context.viewModel.enabledLogTypes.contains(.error))
+
+        context.viewModel.selectLogChannel(.console)
+
+        XCTAssertEqual(context.viewModel.searchText, "console query")
+        XCTAssertTrue(context.viewModel.enabledLogTypes.contains(.info))
+        XCTAssertFalse(context.viewModel.enabledLogTypes.contains(.error))
     }
 
     func testMaintenanceOperationCommandSequences() {
@@ -97,6 +193,7 @@ private struct LegacyPreferencesSnapshot {
 @MainActor
 private final class MockProjectMaintenance: FlutterProjectMaintaining {
     private(set) var operations: [FlutterProjectMaintenanceOperation] = []
+    private var onOutput: ((String, LogEntryType) -> Void)?
     private var completion: ((FlutterProjectMaintenanceOutcome) -> Void)?
 
     func run(
@@ -106,13 +203,19 @@ private final class MockProjectMaintenance: FlutterProjectMaintaining {
         completion: @escaping (FlutterProjectMaintenanceOutcome) -> Void
     ) -> Bool {
         operations.append(operation)
+        self.onOutput = onOutput
         self.completion = completion
         onOutput(operation.displayName, .command)
         return true
     }
 
+    func emit(_ message: String, type: LogEntryType) {
+        onOutput?(message, type)
+    }
+
     func finish(_ outcome: FlutterProjectMaintenanceOutcome) {
         let completion = completion
+        onOutput = nil
         self.completion = nil
         completion?(outcome)
     }

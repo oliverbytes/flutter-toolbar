@@ -34,9 +34,9 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Console") {
+                Section("Logs") {
                     HStack {
-                        Text("Font Size")
+                        Text("Log Font Size")
                         Slider(value: $consoleFontSize, in: 9...20, step: 1)
                         Text("\(Int(consoleFontSize)) pt")
                             .monospacedDigit()
@@ -59,7 +59,7 @@ struct SettingsView: View {
 
                 Section("Run History") {
                     LabeledContent("Stored", value: "\(viewModel.sessions.count) of \(WorkspaceStore.sessionLimit)")
-                    Text("Only project, device, configuration, timing, and outcome metadata is saved. Console text is never stored.")
+                    Text("Only project, device, configuration, timing, and outcome metadata is saved. Console and Output text is never stored.")
                         .workbenchFont(.caption)
                         .foregroundStyle(WorkbenchColor.textSecondary)
                     Button("Clear Run History", role: .destructive, action: viewModel.clearHistory)
@@ -95,8 +95,8 @@ private struct ShortcutSettingsView: View {
                 }
             }
 
-            Section("Console") {
-                ForEach(WorkbenchAction.consoleActions) { action in
+            Section("Logs") {
+                ForEach(WorkbenchAction.logActions) { action in
                     ShortcutRow(action: action, keyboardShortcuts: keyboardShortcuts)
                 }
             }

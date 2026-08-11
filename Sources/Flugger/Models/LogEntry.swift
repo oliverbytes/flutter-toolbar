@@ -1,5 +1,20 @@
 import Foundation
 
+enum LogChannel: String, CaseIterable, Hashable, Identifiable {
+    case console
+    case output
+
+    var id: String { rawValue }
+    var label: String { rawValue.capitalized }
+
+    var systemImage: String {
+        switch self {
+        case .console: "terminal"
+        case .output: "text.alignleft"
+        }
+    }
+}
+
 enum LogEntryType: String, Codable, CaseIterable, Hashable {
     case info
     case error
