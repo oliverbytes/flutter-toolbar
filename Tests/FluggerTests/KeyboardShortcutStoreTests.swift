@@ -58,6 +58,17 @@ final class KeyboardShortcutStoreTests: XCTestCase {
         )
     }
 
+    func testLogChannelShortcutsUsePlannedBindings() {
+        XCTAssertEqual(
+            WorkbenchAction.showConsole.defaultShortcut,
+            WorkbenchShortcut(key: .one, modifiers: [.command, .shift])
+        )
+        XCTAssertEqual(
+            WorkbenchAction.showOutput.defaultShortcut,
+            WorkbenchShortcut(key: .two, modifiers: [.command, .shift])
+        )
+    }
+
     func testAppFontSizeChangesAreClamped() {
         XCTAssertEqual(AppFontSizing.increased(AppFontSizing.maximumSize), AppFontSizing.maximumSize)
         XCTAssertEqual(AppFontSizing.decreased(AppFontSizing.minimumSize), AppFontSizing.minimumSize)

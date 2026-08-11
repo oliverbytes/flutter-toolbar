@@ -15,6 +15,7 @@ struct ConsoleToolbar: View {
         ViewThatFits(in: .horizontal) {
             regularToolbar
             compactToolbar
+            narrowToolbar
         }
         .padding(.horizontal, WorkbenchSpacing.medium)
         .padding(.vertical, WorkbenchSpacing.xs)
@@ -34,6 +35,9 @@ struct ConsoleToolbar: View {
                 }
             }
 
+            channelPicker(width: 200)
+            maintenanceIndicator(includeLabel: true)
+
             Spacer()
             trailingActions
         }
@@ -42,34 +46,91 @@ struct ConsoleToolbar: View {
     private var compactToolbar: some View {
         HStack(spacing: WorkbenchSpacing.xs) {
             searchField.frame(minWidth: 140, maxWidth: 220)
-
-            Menu {
-                ForEach(LogEntryType.allCases, id: \.self) { type in
-                    Button {
-                        viewModel.toggleFilter(type)
-                    } label: {
-                        Label(type.label, systemImage: viewModel.enabledLogTypes.contains(type) ? "checkmark" : type.systemImage)
-                    }
-                }
-            } label: {
-                Label("Log Filters", systemImage: "line.3.horizontal.decrease")
-                    .labelStyle(.iconOnly)
-                    .frame(width: 44, height: 44)
-            }
-            .menuStyle(.borderlessButton)
-            .workbenchTooltip("Filter console output", placement: .below)
-            .accessibilityLabel("Log Filters")
+            filtersMenu
+            channelPicker(width: 164)
+            maintenanceIndicator(includeLabel: false)
 
             Spacer(minLength: 0)
             trailingActions
         }
     }
 
+    private var narrowToolbar: some View {
+        HStack(spacing: WorkbenchSpacing.xs) {
+            searchField.frame(minWidth: 96, maxWidth: 160)
+            filtersMenu
+            channelPicker(width: 150)
+            maintenanceIndicator(includeLabel: false)
+
+            Spacer(minLength: 0)
+            trailingActionsMenu
+        }
+    }
+
+    private func channelPicker(width: CGFloat) -> some View {
+        Picker(
+            "",
+            selection: Binding(
+                get: { viewModel.selectedLogChannel },
+                set: { channel in viewModel.selectLogChannel(channel) }
+            )
+        ) {
+            ForEach(LogChannel.allCases) { channel in
+                Label(channel.label, systemImage: channel.systemImage)
+                    .tag(channel)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .frame(width: width)
+        .accessibilityLabel("Log Channel")
+    }
+
+    @ViewBuilder
+    private func maintenanceIndicator(includeLabel: Bool) -> some View {
+        if viewModel.isCurrentProjectMaintenanceRunning {
+            ProgressView()
+                .controlSize(.small)
+                .accessibilityHidden(true)
+            if includeLabel {
+                Text("Project maintenance running")
+                    .workbenchFont(.caption, weight: .medium)
+                    .foregroundStyle(WorkbenchColor.textSecondary)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    private var filtersMenu: some View {
+        Menu {
+            ForEach(LogEntryType.allCases, id: \.self) { type in
+                Button {
+                    viewModel.toggleFilter(type)
+                } label: {
+                    Label(type.label, systemImage: viewModel.enabledLogTypes.contains(type) ? "checkmark" : type.systemImage)
+                }
+            }
+        } label: {
+            Label("Log Filters", systemImage: "line.3.horizontal.decrease")
+                .labelStyle(.iconOnly)
+                .frame(width: 44, height: 44)
+        }
+        .menuStyle(.borderlessButton)
+        .workbenchTooltip("Filter \(viewModel.selectedLogChannel.label.lowercased()) output", placement: .below)
+        .accessibilityLabel("Log Filters")
+    }
+
     private var searchField: some View {
         HStack(spacing: WorkbenchSpacing.small) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(WorkbenchColor.textSecondary)
-            TextField("Search console", text: $viewModel.searchText)
+            TextField(
+                "Search \(viewModel.selectedLogChannel.label.lowercased())",
+                text: Binding(
+                    get: { viewModel.searchText },
+                    set: { viewModel.searchText = $0 }
+                )
+            )
                 .textFieldStyle(.plain)
                 .workbenchFont(.body)
                 .focused($searchFocused)
@@ -81,7 +142,7 @@ struct ConsoleToolbar: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(WorkbenchColor.textSecondary)
-                .workbenchTooltip("Clear console search", placement: .below)
+                .workbenchTooltip("Clear \(viewModel.selectedLogChannel.label.lowercased()) search", placement: .below)
                 .accessibilityLabel("Clear search")
             }
         }
@@ -128,14 +189,51 @@ struct ConsoleToolbar: View {
             .accessibilityLabel("Export Visible Output")
 
             Button(action: viewModel.clearLogs) {
-                Label("Clear Console", systemImage: "trash")
+                Label("Clear \(viewModel.selectedLogChannel.label)", systemImage: "trash")
                     .labelStyle(.iconOnly)
             }
             .buttonStyle(WorkbenchIconButtonStyle())
             .disabled(viewModel.logLines.isEmpty)
-            .workbenchTooltip(actionHelp("Clear Console", action: .clearConsole), placement: .below)
-            .accessibilityLabel("Clear Console")
+            .workbenchTooltip(
+                actionHelp("Clear \(viewModel.selectedLogChannel.label)", action: .clearConsole),
+                placement: .below
+            )
+            .accessibilityLabel("Clear \(viewModel.selectedLogChannel.label)")
         }
+    }
+
+    private var trailingActionsMenu: some View {
+        Menu {
+            Button {
+                followOutput.toggle()
+            } label: {
+                Label(followOutput ? "Pause Output Following" : "Follow New Output", systemImage: followOutput ? "pause" : "arrow.down.to.line.compact")
+            }
+
+            Divider()
+
+            Button(action: viewModel.copyVisibleLogs) {
+                Label("Copy Visible Output", systemImage: "doc.on.doc")
+            }
+            .disabled(viewModel.filteredLogs.isEmpty)
+
+            Button(action: viewModel.exportVisibleLogs) {
+                Label("Export Visible Output", systemImage: "square.and.arrow.up")
+            }
+            .disabled(viewModel.filteredLogs.isEmpty)
+
+            Button(action: viewModel.clearLogs) {
+                Label("Clear \(viewModel.selectedLogChannel.label)", systemImage: "trash")
+            }
+            .disabled(viewModel.logLines.isEmpty)
+        } label: {
+            Label("Log Actions", systemImage: "ellipsis.circle")
+                .labelStyle(.iconOnly)
+                .frame(width: 44, height: 44)
+        }
+        .menuStyle(.borderlessButton)
+        .workbenchTooltip("More \(viewModel.selectedLogChannel.label.lowercased()) actions", placement: .below)
+        .accessibilityLabel("Log Actions")
     }
 
     private func actionHelp(_ title: String, action: WorkbenchAction) -> String {
@@ -176,11 +274,11 @@ struct ConsolePanel: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            RunStateSpine(state: viewModel.appState, reduceMotion: reduceMotion)
+            RunStateSpine(state: activityState, reduceMotion: reduceMotion)
 
             Group {
                 if viewModel.logLines.isEmpty {
-                    ConsoleEmptyState(viewModel: viewModel)
+                    LogEmptyState(viewModel: viewModel)
                 } else if viewModel.filteredLogs.isEmpty {
                     ContentUnavailableView(
                         "No Matching Output",
@@ -192,13 +290,21 @@ struct ConsolePanel: View {
                         entries: viewModel.filteredLogs,
                         fontSize: consoleFontSize,
                         showTimestamps: showTimestamps,
-                        followOutput: followOutput
+                        followOutput: followOutput,
+                        accessibilityLabel: "\(viewModel.selectedLogChannel.label) output"
                     )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(WorkbenchColor.surface)
         }
+    }
+
+    private var activityState: AppState {
+        if viewModel.selectedLogChannel == .output {
+            return viewModel.isCurrentProjectMaintenanceRunning ? .starting : .idle
+        }
+        return viewModel.appState
     }
 }
 
@@ -207,6 +313,7 @@ private struct SelectableConsoleTextView: NSViewRepresentable {
     let fontSize: CGFloat
     let showTimestamps: Bool
     let followOutput: Bool
+    let accessibilityLabel: String
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -246,7 +353,7 @@ private struct SelectableConsoleTextView: NSViewRepresentable {
             height: CGFloat.greatestFiniteMagnitude
         )
         textView.textContainer?.widthTracksTextView = true
-        textView.setAccessibilityLabel("Console output")
+        textView.setAccessibilityLabel(accessibilityLabel)
 
         scrollView.documentView = textView
         return scrollView
@@ -254,6 +361,7 @@ private struct SelectableConsoleTextView: NSViewRepresentable {
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? NSTextView else { return }
+        textView.setAccessibilityLabel(accessibilityLabel)
         context.coordinator.update(
             textView: textView,
             in: scrollView,
@@ -264,6 +372,7 @@ private struct SelectableConsoleTextView: NSViewRepresentable {
         )
     }
 
+    @MainActor
     final class Coordinator {
         private var renderedEntryIDs: [UUID] = []
         private var renderedFontSize: CGFloat?
@@ -422,7 +531,7 @@ private enum ConsoleTextRenderer {
     }
 }
 
-private struct ConsoleEmptyState: View {
+private struct LogEmptyState: View {
     @ObservedObject var viewModel: WorkspaceViewModel
 
     var body: some View {
@@ -435,6 +544,12 @@ private struct ConsoleEmptyState: View {
                 Button("Open Project…", action: viewModel.chooseProject)
                     .buttonStyle(WorkbenchPrimaryButtonStyle())
             }
+        } else if viewModel.selectedLogChannel == .output {
+            ContentUnavailableView(
+                "Output Ready",
+                systemImage: "text.alignleft",
+                description: Text("Run Pub Get or Clean + Pub Get to see project maintenance output.")
+            )
         } else if !viewModel.isDaemonRunning {
             ContentUnavailableView {
                 Label("Flutter Tools Unavailable", systemImage: "exclamationmark.triangle")
@@ -503,24 +618,24 @@ struct WorkbenchStatusBar: View {
             Button {
                 consoleFontSize = max(9, consoleFontSize - 1)
             } label: {
-                Label("Decrease Console Font Size", systemImage: "textformat.size.smaller")
+                Label("Decrease Log Font Size", systemImage: "textformat.size.smaller")
                     .labelStyle(.iconOnly)
             }
             .buttonStyle(WorkbenchIconButtonStyle())
             .disabled(consoleFontSize <= 9)
-            .workbenchTooltip("Decrease console font size")
-            .accessibilityLabel("Decrease Console Font Size")
+            .workbenchTooltip("Decrease log font size")
+            .accessibilityLabel("Decrease Log Font Size")
 
             Button {
                 consoleFontSize = min(20, consoleFontSize + 1)
             } label: {
-                Label("Increase Console Font Size", systemImage: "textformat.size.larger")
+                Label("Increase Log Font Size", systemImage: "textformat.size.larger")
                     .labelStyle(.iconOnly)
             }
             .buttonStyle(WorkbenchIconButtonStyle())
             .disabled(consoleFontSize >= 20)
-            .workbenchTooltip("Increase console font size")
-            .accessibilityLabel("Increase Console Font Size")
+            .workbenchTooltip("Increase log font size")
+            .accessibilityLabel("Increase Log Font Size")
         }
         .padding(.horizontal, WorkbenchSpacing.medium)
         .frame(height: 44)
@@ -529,7 +644,10 @@ struct WorkbenchStatusBar: View {
     }
 
     private var statusColor: Color {
-        switch viewModel.appState {
+        if viewModel.selectedLogChannel == .output, viewModel.isCurrentProjectMaintenanceRunning {
+            return WorkbenchColor.warning
+        }
+        return switch viewModel.appState {
         case .idle: viewModel.isDaemonRunning ? WorkbenchColor.textSecondary : WorkbenchColor.warning
         case .starting, .stopping: WorkbenchColor.warning
         case .running: WorkbenchColor.success

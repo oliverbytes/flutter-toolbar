@@ -127,8 +127,30 @@ private struct WorkbenchCommands: Commands {
                 .disabled(!viewModel.canControl)
         }
 
-        CommandMenu("Console") {
-            Button("Find", systemImage: "magnifyingglass") {
+        CommandMenu("Logs") {
+            Button {
+                viewModel.selectLogChannel(.console)
+            } label: {
+                Label(
+                    "Show Console",
+                    systemImage: viewModel.selectedLogChannel == .console ? "checkmark" : LogChannel.console.systemImage
+                )
+            }
+            .workbenchShortcut(keyboardShortcuts.binding(for: .showConsole))
+
+            Button {
+                viewModel.selectLogChannel(.output)
+            } label: {
+                Label(
+                    "Show Output",
+                    systemImage: viewModel.selectedLogChannel == .output ? "checkmark" : LogChannel.output.systemImage
+                )
+            }
+            .workbenchShortcut(keyboardShortcuts.binding(for: .showOutput))
+
+            Divider()
+
+            Button("Find in \(viewModel.selectedLogChannel.label)", systemImage: "magnifyingglass") {
                 NotificationCenter.default.post(name: .focusConsoleSearch, object: nil)
             }
             .workbenchShortcut(keyboardShortcuts.binding(for: .focusConsoleSearch))
@@ -143,7 +165,7 @@ private struct WorkbenchCommands: Commands {
 
             Divider()
 
-            Button("Clear Console", systemImage: "trash", action: viewModel.clearLogs)
+            Button("Clear \(viewModel.selectedLogChannel.label)", systemImage: "trash", action: viewModel.clearLogs)
                 .workbenchShortcut(keyboardShortcuts.binding(for: .clearConsole))
                 .disabled(viewModel.logLines.isEmpty)
         }
