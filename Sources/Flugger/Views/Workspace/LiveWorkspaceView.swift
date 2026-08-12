@@ -5,6 +5,7 @@ struct LiveWorkspaceView: View {
     @ObservedObject var sourceControlViewModel: SourceControlViewModel
     @ObservedObject private var terminalWorkspaces: TerminalWorkspaceManager
     @Binding var isSourceControlSheetPresented: Bool
+    @State private var showingConfigEditor = false
 
     init(viewModel: WorkspaceViewModel, sourceControlViewModel: SourceControlViewModel, isSourceControlSheetPresented: Binding<Bool>) {
         self.viewModel = viewModel
@@ -16,7 +17,7 @@ struct LiveWorkspaceView: View {
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
-                SetupBar(viewModel: viewModel)
+                SetupBar(viewModel: viewModel, showingConfigEditor: $showingConfigEditor)
                 Divider().overlay(WorkbenchColor.divider)
 
                 VStack(spacing: 0) {
@@ -59,6 +60,15 @@ struct LiveWorkspaceView: View {
             .background(WorkbenchColor.background)
         }
         .accessibilityIdentifier("consoleWorkspace")
+        .sheet(isPresented: $showingConfigEditor) {
+            if let projectPath = viewModel.projectPath {
+                LaunchConfigEditorSheet(
+                    projectPath: projectPath,
+                    initialConfigs: viewModel.launchConfigs,
+                    onSave: { viewModel.reloadLaunchConfigs() }
+                )
+            }
+        }
     }
 
     private func clampedPaneHeight(_ height: Double, availableHeight: CGFloat) -> Double {
@@ -73,6 +83,7 @@ struct LiveWorkspaceView: View {
 
 private struct SetupBar: View {
     @ObservedObject var viewModel: WorkspaceViewModel
+    @Binding var showingConfigEditor: Bool
 
     var body: some View {
         HStack(spacing: WorkbenchSpacing.compact) {
@@ -138,6 +149,11 @@ private struct SetupBar: View {
                 }
             }
         }
+        Divider()
+        Button("Edit Configurations…", systemImage: "slider.horizontal.2.gobackward") {
+            showingConfigEditor = true
+        }
+        .disabled(viewModel.projectPath == nil || viewModel.isAppRunning)
     }
 }
 
@@ -195,7 +211,7 @@ private struct RunControlCluster: View {
             Button(action: viewModel.pubGet) {
                 Label("Pub Get", systemImage: "shippingbox.fill").labelStyle(.iconOnly)
             }
-            .buttonStyle(WorkbenchIconButtonStyle(color: WorkbenchColor.accent.opacity(0.78)))
+            .buttonStyle(WorkbenchIconButtonStyle(color: WorkbenchColor.textSecondary))
             .disabled(!viewModel.canMaintainProject)
             .workbenchTooltip(viewModel.projectMaintenanceBlockReason ?? actionHelp("Pub Get", action: .pubGet))
             .accessibilityLabel("Pub Get")

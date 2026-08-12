@@ -62,6 +62,7 @@ struct WorkbenchSidebar: View {
             }
         }
         .listStyle(.sidebar)
+        .scrollIndicators(.never)
         .navigationTitle("Flugger")
     }
 }

@@ -118,6 +118,7 @@ final class WorkspaceViewModel: ObservableObject {
     var canRun: Bool { projectPath != nil && selectedDeviceId != nil && !isAppRunning && !isProjectMaintenanceRunning }
     var canMaintainProject: Bool { projectPath != nil && !isAppRunning && !isProjectMaintenanceRunning }
     var isDaemonRunning: Bool { daemon.isRunning }
+    var daemonState: DaemonState { daemon.state }
     var hasRunningProjects: Bool { projectRunStates.values.contains(where: \.isRunning) }
     var isTerminalAvailable: Bool {
         projectPath != nil && selectedSession == nil
@@ -457,7 +458,20 @@ final class WorkspaceViewModel: ObservableObject {
         }
     }
 
+    func reloadLaunchConfigs() {
+        guard let projectPath else { return }
+        let parsed = LaunchConfig.parse(from: projectPath)
+        launchConfigs = parsed.isEmpty ? LaunchConfig.defaultConfigs() : parsed
+        if let selected = selectedLaunchConfigName, !launchConfigs.contains(where: { $0.name == selected }) {
+            selectedLaunchConfigName = launchConfigs.first?.name
+        } else if selectedLaunchConfigName == nil {
+            selectedLaunchConfigName = launchConfigs.first?.name
+        }
+    }
+
     func refreshDevices() { daemon.refreshDevices() }
+
+    func restartDaemon() { daemon.restart() }
 
     func toggleTerminal() {
         guard isTerminalAvailable, let projectPath else { return }
@@ -524,14 +538,6 @@ final class WorkspaceViewModel: ObservableObject {
                           devices.contains(where: { $0.id == saved }) {
                     self.selectedDeviceId = saved
                 }
-            }
-            .store(in: &daemonCancellables)
-
-        daemon.$isRunning
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] running in
-                guard let self, !self.isAppRunning, !self.isProjectMaintenanceRunning else { return }
-                self.status = running ? "Flutter tools ready" : self.daemon.status
             }
             .store(in: &daemonCancellables)
 

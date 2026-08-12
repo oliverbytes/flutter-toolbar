@@ -60,6 +60,12 @@ final class TerminalWorkspaceManager: ObservableObject {
                 project.terminalWorkspace.map { (project.path, $0) }
             }
         )
+        // Always start with terminal hidden; users toggle it with Ctrl+`
+        for key in workspaces.keys {
+            var snapshot = workspaces[key]!
+            snapshot.isVisible = false
+            workspaces[key] = snapshot
+        }
     }
 
     func snapshot(for projectPath: String) -> TerminalWorkspaceSnapshot {

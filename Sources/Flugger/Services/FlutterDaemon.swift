@@ -1,11 +1,20 @@
 import Foundation
 import Combine
 
+enum DaemonState: Equatable {
+    case idle
+    case starting
+    case connected
+    case failed(String)
+    case stopped
+}
+
 @MainActor
 class FlutterDaemon: ObservableObject {
     @Published var devices: [Device] = []
     @Published var isRunning = false
-    @Published var status: String = "Starting daemon..."
+    @Published var state: DaemonState = .idle
+    @Published var status: String = ""
     var onLogOutput: ((String, LogEntryType) -> Void)?
     
     private var process: Process?
@@ -21,7 +30,7 @@ class FlutterDaemon: ObservableObject {
     }
 
     func start() {
-        guard !isRunning else { return }
+        guard state != .starting, !isRunning else { return }
 
         stdoutPipe = Pipe()
         stdinPipe = Pipe()
@@ -29,18 +38,28 @@ class FlutterDaemon: ObservableObject {
         stdoutBuffer = ""
         stderrBuffer = ""
         
+        state = .starting
+        status = "Starting Flutter daemon…"
+        
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
         process.arguments = ["-ic", "flutter daemon"]
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
         process.standardInput = stdinPipe
-        process.terminationHandler = { [weak self] _ in
+        process.terminationHandler = { [weak self] process in
             Task { @MainActor in
+                let exitCode = process.terminationStatus
                 self?.isRunning = false
-                self?.status = "Daemon stopped"
                 self?.devices.removeAll()
-                self?.onLogOutput?("Daemon stopped", .error)
+                if exitCode == 0 {
+                    self?.state = .stopped
+                    self?.status = "Daemon stopped"
+                } else {
+                    self?.state = .failed("Exited with code \(exitCode)")
+                    self?.status = "Daemon stopped unexpectedly (code \(exitCode))"
+                }
+                self?.onLogOutput?(self?.status ?? "Daemon stopped", .error)
             }
         }
         
@@ -67,9 +86,10 @@ class FlutterDaemon: ObservableObject {
             try process.run()
             self.process = process
             self.isRunning = true
-            self.status = "Daemon running"
+            self.status = "Daemon running, waiting for connection…"
             sendRequest(method: "device.enable", params: [:])
         } catch {
+            self.state = .failed(error.localizedDescription)
             self.status = "Failed to start daemon: \(error.localizedDescription)"
             onLogOutput?("Error: \(error.localizedDescription)", .error)
         }
@@ -81,6 +101,8 @@ class FlutterDaemon: ObservableObject {
         process?.terminate()
         process = nil
         isRunning = false
+        state = .stopped
+        status = "Daemon stopped"
         devices.removeAll()
     }
     
@@ -197,6 +219,7 @@ class FlutterDaemon: ObservableObject {
                     onLogOutput?("Device removed: \(device.name)", .info)
                 }
             case "daemon.connected":
+                state = .connected
                 status = "Daemon connected"
                 onLogOutput?("Daemon connected", .info)
             case "daemon.logMessage":

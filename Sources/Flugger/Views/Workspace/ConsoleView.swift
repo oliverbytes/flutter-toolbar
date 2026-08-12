@@ -606,7 +606,7 @@ struct WorkbenchStatusBar: View {
         HStack(spacing: WorkbenchSpacing.small) {
             gitGlance
 
-            Circle().fill(statusColor).frame(width: 8, height: 8)
+            daemonIndicator
             Text(viewModel.status)
                 .workbenchFont(.caption, weight: .medium)
                 .foregroundStyle(WorkbenchColor.textSecondary)
@@ -695,6 +695,68 @@ struct WorkbenchStatusBar: View {
         case .starting, .stopping: WorkbenchColor.warning
         case .running: WorkbenchColor.success
         case .error: WorkbenchColor.error
+        }
+    }
+
+    @ViewBuilder
+    private var daemonIndicator: some View {
+        let display = daemonStatusDisplay
+        HStack(spacing: 4) {
+            Image(systemName: display.icon)
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(display.color)
+            Text(display.label)
+                .workbenchFont(.caption, weight: .medium)
+                .foregroundStyle(display.color)
+            if daemonNeedsRestart {
+                Button {
+                    viewModel.restartDaemon()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 9, weight: .bold))
+                }
+                .buttonStyle(.plain)
+                .workbenchTooltip("Restart Flutter daemon")
+            }
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(display.color.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 4))
+        .help(display.help)
+    }
+
+    private var daemonNeedsRestart: Bool {
+        if case .failed = viewModel.daemonState { return true }
+        return viewModel.daemonState == .stopped
+    }
+
+    private var daemonStatusDisplay: (color: Color, icon: String, label: String, help: String) {
+        if viewModel.appState != .idle {
+            return switch viewModel.appState {
+            case .starting:
+                (WorkbenchColor.warning, "play.fill", "Starting", "Launching app…")
+            case .running:
+                (WorkbenchColor.success, "bolt.fill", "Running", "App is running")
+            case .stopping:
+                (WorkbenchColor.warning, "stop.fill", "Stopping", "Stopping app…")
+            case .error:
+                (WorkbenchColor.error, "xmark.circle.fill", "Error", "App encountered an error")
+            case .idle:
+                (WorkbenchColor.textSecondary, "circle", "", "")
+            }
+        }
+        return switch viewModel.daemonState {
+        case .idle:
+            (WorkbenchColor.textSecondary, "circle.dotted", "Offline", "Flutter daemon has not been started")
+        case .starting:
+            (WorkbenchColor.warning, "arrow.triangle.2.circlepath", "Connecting", "Starting Flutter daemon…")
+        case .connected:
+            (WorkbenchColor.success, "circle.fill", "Ready", "Flutter daemon is connected and ready")
+        case .failed(let reason):
+            (WorkbenchColor.error, "xmark.circle.fill", "Failed", "Daemon failed: \(reason)")
+        case .stopped:
+            (WorkbenchColor.textSecondary, "circle.slash", "Stopped", "Daemon has stopped")
         }
     }
 }

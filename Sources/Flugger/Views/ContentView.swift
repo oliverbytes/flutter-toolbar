@@ -3,7 +3,7 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var viewModel: WorkspaceViewModel
-    @ObservedObject var sourceControlViewModel: SourceControlViewModel
+    let sourceControlViewModel: SourceControlViewModel
     @ObservedObject private var terminalWorkspaces: TerminalWorkspaceManager
     @EnvironmentObject private var keyboardShortcuts: KeyboardShortcutStore
     @State private var columnVisibility: NavigationSplitViewVisibility = .detailOnly

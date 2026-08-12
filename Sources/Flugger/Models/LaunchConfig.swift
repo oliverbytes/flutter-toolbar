@@ -39,6 +39,78 @@ struct LaunchConfig: Identifiable, Hashable {
         return parts.joined(separator: " ")
     }
 
+    func asDictionary() -> [String: Any] {
+        var dict: [String: Any] = [
+            "type": "dart",
+            "request": "launch",
+            "name": name,
+        ]
+        if let flutterMode, !flutterMode.isEmpty {
+            dict["flutterMode"] = flutterMode
+        }
+        if let program, !program.isEmpty {
+            dict["program"] = program
+        }
+        if !args.isEmpty {
+            dict["args"] = args
+        }
+        if !toolArgs.isEmpty {
+            dict["toolArgs"] = toolArgs
+        }
+        if let deviceId, !deviceId.isEmpty {
+            dict["deviceId"] = deviceId
+        }
+        if let env, !env.isEmpty {
+            dict["env"] = env
+        }
+        return dict
+    }
+
+    struct LaunchConfigFile {
+        let version: String
+        let nonDartConfigurations: [[String: Any]]
+    }
+
+    static func readFullConfigFile(from projectPath: String) -> LaunchConfigFile? {
+        let launchJsonPath = (projectPath as NSString).appendingPathComponent(".vscode/launch.json")
+        guard let fileData = FileManager.default.contents(atPath: launchJsonPath),
+              let fileContents = String(data: fileData, encoding: .utf8),
+              let data = normalizedJSONData(from: fileContents),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        let version = json["version"] as? String ?? "0.2.0"
+        let configurations = json["configurations"] as? [[String: Any]] ?? []
+        let nonDart = configurations.filter { config in
+            guard let type = config["type"] as? String, type == "dart",
+                  let request = config["request"] as? String, request == "launch" else {
+                return true
+            }
+            return false
+        }
+        return LaunchConfigFile(version: version, nonDartConfigurations: nonDart)
+    }
+
+    static func saveConfigs(
+        dartConfigs: [LaunchConfig],
+        to projectPath: String
+    ) throws {
+        let existingFile = readFullConfigFile(from: projectPath)
+        let sortedConfigs = dartConfigs.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        let fullConfigs = (existingFile?.nonDartConfigurations ?? []) + sortedConfigs.map { $0.asDictionary() }
+
+        let root: [String: Any] = [
+            "version": existingFile?.version ?? "0.2.0",
+            "configurations": fullConfigs,
+        ]
+        let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys])
+        let vscodePath = (projectPath as NSString).appendingPathComponent(".vscode")
+        let fileURL = URL(fileURLWithPath: vscodePath)
+        try FileManager.default.createDirectory(at: fileURL, withIntermediateDirectories: true, attributes: nil)
+        let launchURL = fileURL.appendingPathComponent("launch.json")
+        try data.write(to: launchURL)
+    }
+
     static func parse(from projectPath: String) -> [LaunchConfig] {
         let launchJsonPath = (projectPath as NSString).appendingPathComponent(".vscode/launch.json")
         guard let fileData = FileManager.default.contents(atPath: launchJsonPath),

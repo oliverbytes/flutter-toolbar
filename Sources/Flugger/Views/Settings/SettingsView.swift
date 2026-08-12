@@ -9,9 +9,42 @@ struct SettingsView: View {
     @AppStorage(PreferenceKeys.showTimestamps) private var showTimestamps = true
     @AppStorage(PreferenceKeys.followOutput) private var followOutput = true
 
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    }
+
+    private var buildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    }
+
+    private var copyright: String {
+        Bundle.main.infoDictionary?["NSHumanReadableCopyright"] as? String
+            ?? "Copyright © 2025 Flugger. All rights reserved."
+    }
+
     var body: some View {
         TabView {
             Form {
+                Section {
+                    HStack(spacing: WorkbenchSpacing.medium) {
+                        Image(nsImage: NSApp.applicationIconImage)
+                            .resizable()
+                            .frame(width: 64, height: 64)
+
+                        VStack(alignment: .leading, spacing: WorkbenchSpacing.xs) {
+                            Text("Flugger")
+                                .font(.headline)
+                            Text("Version \(appVersion) (\(buildNumber))")
+                                .workbenchFont(.body)
+                                .foregroundStyle(WorkbenchColor.textSecondary)
+                            Text(copyright)
+                                .workbenchFont(.caption)
+                                .foregroundStyle(WorkbenchColor.textSecondary)
+                        }
+                    }
+                    .padding(.vertical, WorkbenchSpacing.xs)
+                }
+
                 Section("Appearance") {
                     Picker("Theme", selection: $themeMode) {
                         ForEach(ThemeMode.allCases, id: \.rawValue) { theme in
@@ -46,6 +79,14 @@ struct SettingsView: View {
                     Toggle("Show timestamps", isOn: $showTimestamps)
                     Toggle("Follow new output", isOn: $followOutput)
                 }
+
+                Section {
+                    Button("Restore Defaults") {
+                        restoreDefaults()
+                    }
+                } footer: {
+                    Text("Resets all General settings to their original values.")
+                }
             }
             .formStyle(.grouped)
             .tabItem { Label("General", systemImage: "gearshape") }
@@ -75,6 +116,14 @@ struct SettingsView: View {
         .frame(width: 600, height: 500)
         .workbenchAppFontSize(appFontSize)
         .tint(WorkbenchColor.accent)
+    }
+
+    private func restoreDefaults() {
+        themeMode = ThemeMode.system.rawValue
+        appFontSize = AppFontSizing.defaultSize
+        consoleFontSize = 12
+        showTimestamps = true
+        followOutput = true
     }
 }
 

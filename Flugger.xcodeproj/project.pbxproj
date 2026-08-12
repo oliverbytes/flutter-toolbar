@@ -49,7 +49,9 @@
 		BD789F4471451F982F278352 /* RunnerMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE70EF2FEA7B5EDCF1D44794 /* RunnerMessage.swift */; };
 		C4DEB393E505C2BCE7F2957E /* ConsoleLogToolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E33CC7454FBA7213B412E1 /* ConsoleLogToolsTests.swift */; };
 		E5B7224D61006A08408194BB /* MultiProjectRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB5C4F29E609E3A525A9AD6 /* MultiProjectRunnerTests.swift */; };
+		F400D444D444D444D444D444 /* LaunchConfigEditorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200B222B222B222B222B222 /* LaunchConfigEditorTests.swift */; };
 		FCFB244068E3E7FA83ACF722 /* FlutterRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0CE868A0610481F988454EE /* FlutterRunner.swift */; };
+		F300C333C333C333C333C333 /* LaunchConfigEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100A111A111A111A111A111 /* LaunchConfigEditorView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +74,7 @@
 /* Begin PBXFileReference section */
 		03AB6D93B36C677EBF0B3A7F /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		0AE0F1B54A0388E1ADAB669F /* WorkbenchSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkbenchSidebar.swift; sourceTree = "<group>"; };
+		F100A111A111A111A111A111 /* LaunchConfigEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchConfigEditorView.swift; sourceTree = "<group>"; };
 		0B8DF0CF0FE010E4C7D6DED5 /* ConsoleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsoleView.swift; sourceTree = "<group>"; };
 		0EA04432BDE70A9CE144D6CE /* LaunchConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchConfig.swift; sourceTree = "<group>"; };
 		162B1C791DC95E51A11D8786 /* TerminalWorkspaceManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWorkspaceManagerTests.swift; sourceTree = "<group>"; };
@@ -104,6 +107,7 @@
 		A5F49D2EEDB0D7F46814D566 /* FluggerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FluggerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB0ED5E497C55E2FA3E83CD9 /* WorkspaceProjectIsolationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceProjectIsolationTests.swift; sourceTree = "<group>"; };
 		BFD48EEC79E17379806DCB09 /* WorkspaceStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceStoreTests.swift; sourceTree = "<group>"; };
+		F200B222B222B222B222B222 /* LaunchConfigEditorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchConfigEditorTests.swift; sourceTree = "<group>"; };
 		C0FAAFA5E198564675DBAC21 /* ProjectValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectValidationTests.swift; sourceTree = "<group>"; };
 		C42D61244982D36CC59B56F1 /* KeyboardShortcutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutStore.swift; sourceTree = "<group>"; };
 		C73ED4F2C7A9BDAFD76D7D17 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -192,6 +196,7 @@
 				C9C90CF50EA8E5D64761CE88 /* SessionDetailView.swift */,
 				909D7B729F55900D9E368C8F /* TerminalPaneView.swift */,
 				0AE0F1B54A0388E1ADAB669F /* WorkbenchSidebar.swift */,
+				F100A111A111A111A111A111 /* LaunchConfigEditorView.swift */,
 			);
 			path = Workspace;
 			sourceTree = "<group>";
@@ -235,6 +240,7 @@
 				2225E093B82B1BEAF545586C /* ThemeModeTests.swift */,
 				AB0ED5E497C55E2FA3E83CD9 /* WorkspaceProjectIsolationTests.swift */,
 				BFD48EEC79E17379806DCB09 /* WorkspaceStoreTests.swift */,
+				F200B222B222B222B222B222 /* LaunchConfigEditorTests.swift */,
 			);
 			name = FluggerTests;
 			path = Tests/FluggerTests;
@@ -394,6 +400,7 @@
 				C4DEB393E505C2BCE7F2957E /* ConsoleLogToolsTests.swift in Sources */,
 				29F650A9D5E064F8A4858606 /* KeyboardShortcutStoreTests.swift in Sources */,
 				E5B7224D61006A08408194BB /* MultiProjectRunnerTests.swift in Sources */,
+				F400D444D444D444D444D444 /* LaunchConfigEditorTests.swift in Sources */,
 				2487AB3EF1587368678F7359 /* ProjectMaintenanceTests.swift in Sources */,
 				51F01DCB2D4C1AC8FE1A91F3 /* ProjectValidationTests.swift in Sources */,
 				5C0B00000000000000000005 /* SourceControlTests.swift in Sources */,
@@ -419,6 +426,7 @@
 				2C0B00000000000000000002 /* GitClient.swift in Sources */,
 				856A2316A3E033F6B0F5A420 /* FlutterProjectMaintenanceService.swift in Sources */,
 				FCFB244068E3E7FA83ACF722 /* FlutterRunner.swift in Sources */,
+				F300C333C333C333C333C333 /* LaunchConfigEditorView.swift in Sources */,
 				312E55F228081EA816F1DADF /* KeyboardShortcut.swift in Sources */,
 				394CF4704C826C2732445DE1 /* KeyboardShortcutStore.swift in Sources */,
 				4E56EC6CA5B080C05B6AD6F7 /* LaunchConfig.swift in Sources */,
