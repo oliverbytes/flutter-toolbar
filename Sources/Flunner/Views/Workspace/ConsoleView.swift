@@ -221,6 +221,7 @@ struct ConsoleToolbar: View {
                 Label("Flutter CLI", systemImage: "terminal.fill")
                     .labelStyle(.iconOnly)
                     .frame(width: 44, height: 44)
+                    .padding(.trailing, WorkbenchSpacing.compact)
             }
             .menuIndicator(.visible)
             .menuStyle(.borderlessButton)
