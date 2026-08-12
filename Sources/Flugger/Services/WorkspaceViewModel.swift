@@ -540,69 +540,7 @@ final class WorkspaceViewModel: ObservableObject {
 
     func runFlutterCommand(_ command: FlutterCLICommand) {
         guard let projectPath else { return }
-        showLiveLogs(.output, for: projectPath)
-        let fullCommand = (["flutter"] + command.arguments).joined(separator: " ")
-        addLog(fullCommand, type: .command, projectPath: projectPath, channel: .output)
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = ["-ic", fullCommand]
-        process.currentDirectoryURL = URL(fileURLWithPath: projectPath)
-
-        let stdoutPipe = Pipe()
-        let stderrPipe = Pipe()
-        process.standardOutput = stdoutPipe
-        process.standardError = stderrPipe
-
-        let buffers = CommandOutputBuffers()
-
-        stdoutPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
-            let data = handle.availableData
-            guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
-            let result = splitLines(buffers.stdoutBuffer + text.replacingOccurrences(of: "\r", with: "\n"))
-            buffers.stdoutBuffer = result.remainder
-            Task { @MainActor in
-                for line in result.lines {
-                    let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !trimmed.isEmpty else { continue }
-                    self?.addLog(trimmed, type: .info, projectPath: projectPath, channel: .output)
-                }
-            }
-        }
-
-        stderrPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
-            let data = handle.availableData
-            guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
-            let result = splitLines(buffers.stderrBuffer + text.replacingOccurrences(of: "\r", with: "\n"))
-            buffers.stderrBuffer = result.remainder
-            Task { @MainActor in
-                for line in result.lines {
-                    let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !trimmed.isEmpty else { continue }
-                    self?.addLog(trimmed, type: .error, projectPath: projectPath, channel: .output)
-                }
-            }
-        }
-
-        process.terminationHandler = { [weak self] process in
-            Task { @MainActor in
-                let exitCode = process.terminationStatus
-                let message = "\(fullCommand) exited with code \(exitCode)"
-                let logType: LogEntryType = exitCode == 0 ? .info : .error
-                self?.addLog(message, type: logType, projectPath: projectPath, channel: .output)
-            }
-        }
-
-        do {
-            try process.run()
-        } catch {
-            addLog("Failed to run: \(error.localizedDescription)", type: .error, projectPath: projectPath, channel: .output)
-        }
-    }
-
-    private final class CommandOutputBuffers {
-        var stdoutBuffer = ""
-        var stderrBuffer = ""
+        terminalWorkspaces.sendToActiveSession(command, in: projectPath)
     }
 
     func openLink(_ url: URL) {
@@ -933,10 +871,4 @@ final class WorkspaceViewModel: ObservableObject {
     private func rolloverMessage(for key: LogBufferKey) -> String {
         "Older \(key.channel.label.lowercased()) output was removed after reaching 10,000 lines."
     }
-}
-
-private func splitLines(_ buffer: String) -> (lines: [String], remainder: String) {
-    let lines = buffer.components(separatedBy: "\n")
-    guard lines.count > 1 else { return ([], buffer) }
-    return (Array(lines.dropLast()), lines.last ?? "")
 }

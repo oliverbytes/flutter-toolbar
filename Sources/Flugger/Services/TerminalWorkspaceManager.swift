@@ -11,6 +11,7 @@ protocol TerminalSession: AnyObject {
     func applyAppearance(fontSize: CGFloat, foreground: NSColor, background: NSColor, caret: NSColor)
     func focus()
     func terminate()
+    func sendText(_ text: String)
 }
 
 @MainActor
@@ -98,6 +99,28 @@ final class TerminalWorkspaceManager: ObservableObject {
         if state.isVisible, state.tabs.isEmpty {
             addTab(to: projectPath)
         }
+    }
+
+    func sendToActiveSession(_ command: FlutterCLICommand, in projectPath: String) {
+        let text = (["flutter"] + command.arguments).joined(separator: " ")
+        sendToActiveSession(text: text, in: projectPath)
+    }
+
+    private func sendToActiveSession(text: String, in projectPath: String) {
+        ensureWorkspace(for: projectPath)
+        var state = snapshot(for: projectPath)
+
+        if state.tabs.isEmpty {
+            addTab(to: projectPath)
+            state = snapshot(for: projectPath)
+        }
+
+        if !state.isVisible {
+            toggle(for: projectPath)
+        }
+
+        hydrateProjectIfNeeded(projectPath)
+        selectedSession(for: projectPath)?.sendText(text + "\r")
     }
 
     func toggle(for projectPath: String) {
@@ -327,6 +350,11 @@ private final class SwiftTermSession: NSObject, TerminalSession, LocalProcessTer
         guard !isTerminating else { return }
         isTerminating = true
         terminalView.terminate()
+    }
+
+    func sendText(_ text: String) {
+        guard let data = text.data(using: .utf8) else { return }
+        terminalView.process.send(data: ArraySlice(data))
     }
 
     nonisolated func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) { }

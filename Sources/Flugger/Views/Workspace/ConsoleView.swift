@@ -222,6 +222,7 @@ struct ConsoleToolbar: View {
                     .labelStyle(.iconOnly)
                     .frame(width: 44, height: 44)
             }
+            .menuIndicator(.visible)
             .menuStyle(.borderlessButton)
             .workbenchTooltip("Run Flutter CLI command", placement: .below)
             .accessibilityLabel("Flutter CLI Commands")
