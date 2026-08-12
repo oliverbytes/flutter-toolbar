@@ -137,7 +137,7 @@ private struct WorkbenchCommands: Commands {
                 viewModel.openiOSSimulator()
             }
 
-            Menu("Open Android Emulator") {
+            Menu(content: {
                 if viewModel.androidEmulators.isEmpty {
                     Button("Refresh Emulator List") {
                         viewModel.refreshEmulators()
@@ -154,7 +154,9 @@ private struct WorkbenchCommands: Commands {
                         }
                     }
                 }
-            }
+            }, label: {
+                Label("Open Android Emulator", systemImage: "rectangle.landscape.rotate")
+            })
 
             if !viewModel.runningEmulators.isEmpty {
                 Divider()

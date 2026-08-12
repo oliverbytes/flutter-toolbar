@@ -197,6 +197,34 @@ struct ConsoleToolbar: View {
                 placement: .below
             )
             .accessibilityLabel("Clear \(viewModel.selectedLogChannel.label)")
+
+            flutterCLIMenu
+        }
+    }
+
+    @ViewBuilder
+    private var flutterCLIMenu: some View {
+        if viewModel.projectPath != nil {
+            Menu {
+                ForEach(FlutterCLICommand.groups) { group in
+                    Section(group.name) {
+                        ForEach(group.commands) { command in
+                            Button {
+                                viewModel.runFlutterCommand(command)
+                            } label: {
+                                Label(command.name, systemImage: command.systemImage)
+                            }
+                        }
+                    }
+                }
+            } label: {
+                Label("Flutter CLI", systemImage: "terminal.fill")
+                    .labelStyle(.iconOnly)
+                    .frame(width: 44, height: 44)
+            }
+            .menuStyle(.borderlessButton)
+            .workbenchTooltip("Run Flutter CLI command", placement: .below)
+            .accessibilityLabel("Flutter CLI Commands")
         }
     }
 
@@ -224,6 +252,26 @@ struct ConsoleToolbar: View {
                 Label("Clear \(viewModel.selectedLogChannel.label)", systemImage: "trash")
             }
             .disabled(viewModel.logLines.isEmpty)
+
+            if viewModel.projectPath != nil {
+                Divider()
+
+                Menu {
+                    ForEach(FlutterCLICommand.groups) { group in
+                        Section(group.name) {
+                            ForEach(group.commands) { command in
+                                Button {
+                                    viewModel.runFlutterCommand(command)
+                                } label: {
+                                    Label(command.name, systemImage: command.systemImage)
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Flutter CLI Commands", systemImage: "terminal.fill")
+                }
+            }
         } label: {
             Label("Log Actions", systemImage: "ellipsis.circle")
                 .labelStyle(.iconOnly)

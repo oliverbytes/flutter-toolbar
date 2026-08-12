@@ -131,7 +131,7 @@ private struct SetupBar: View {
         Button("Open iOS Simulator", systemImage: "iphone") {
             viewModel.openiOSSimulator()
         }
-        Menu("Open Android Emulator") {
+        Menu {
             if viewModel.androidEmulators.isEmpty {
                 Button("Refresh Emulator List") {
                     viewModel.refreshEmulators()
@@ -148,6 +148,8 @@ private struct SetupBar: View {
                         }
                 }
             }
+        } label: {
+            Label("Open Android Emulator", systemImage: "rectangle.landscape.rotate")
         }
         Divider()
         Button("Refresh Devices", systemImage: "arrow.clockwise") {
