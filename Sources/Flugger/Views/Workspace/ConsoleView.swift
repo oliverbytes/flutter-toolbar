@@ -81,7 +81,6 @@ struct ConsoleToolbar: View {
             }
         }
         .pickerStyle(.segmented)
-        .labelsHidden()
         .frame(width: width)
         .accessibilityLabel("Log Channel")
     }

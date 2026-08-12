@@ -7,27 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1C0B00000000000000000001 /* SourceControlModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C0A00000000000000000001 /* SourceControlModels.swift */; };
-		2C0B00000000000000000002 /* GitClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C0A00000000000000000002 /* GitClient.swift */; };
-		3C0B00000000000000000003 /* SourceControlViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0A00000000000000000003 /* SourceControlViewModel.swift */; };
-		4C0B00000000000000000004 /* SourceControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C0A00000000000000000004 /* SourceControlView.swift */; };
-		5C0B00000000000000000005 /* SourceControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0A00000000000000000005 /* SourceControlTests.swift */; };
-		7C0B00000000000000000007 /* SourceControlUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C0A00000000000000000007 /* SourceControlUITests.swift */; };
 		00AB36417BE4C2C30F25D549 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDD7151997022F6BBEF75D7 /* ContentView.swift */; };
 		0708AED0CE4F1D8F854D4207 /* ConsoleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B8DF0CF0FE010E4C7D6DED5 /* ConsoleView.swift */; };
+		1C0B00000000000000000001 /* SourceControlModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C0A00000000000000000001 /* SourceControlModels.swift */; };
 		2487AB3EF1587368678F7359 /* ProjectMaintenanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D383EE24020F362DCA91D2AD /* ProjectMaintenanceTests.swift */; };
 		27ACD95FAE1D070B5CDF8E44 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD28908C292F992A8B7604D /* DesignTokens.swift */; };
 		28AFA88B737DFE02C5F76CAF /* TerminalPaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 909D7B729F55900D9E368C8F /* TerminalPaneView.swift */; };
 		29F650A9D5E064F8A4858606 /* KeyboardShortcutStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ABEE72C3015BEC5E82FFB38 /* KeyboardShortcutStoreTests.swift */; };
+		2C0B00000000000000000002 /* GitClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C0A00000000000000000002 /* GitClient.swift */; };
 		2E7694D090B7E99F7769C029 /* DaemonMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2931B4F2207918872BF9A3 /* DaemonMessage.swift */; };
 		312E55F228081EA816F1DADF /* KeyboardShortcut.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32C57ABE915A4E0827979D2B /* KeyboardShortcut.swift */; };
 		394CF4704C826C2732445DE1 /* KeyboardShortcutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42D61244982D36CC59B56F1 /* KeyboardShortcutStore.swift */; };
 		3BF5931C1FD30FCC3E6E512E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C73ED4F2C7A9BDAFD76D7D17 /* SettingsView.swift */; };
+		3C0B00000000000000000003 /* SourceControlViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0A00000000000000000003 /* SourceControlViewModel.swift */; };
 		434A219E4683E9DCE116EE25 /* FlutterDaemon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F3D6AFD9D9F4086375B66C /* FlutterDaemon.swift */; };
 		43D137E7CB1DB709CFE506E0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9C8C7D70F4EF3799877DF49A /* Assets.xcassets */; };
+		4C0B00000000000000000004 /* SourceControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C0A00000000000000000004 /* SourceControlView.swift */; };
 		4E56EC6CA5B080C05B6AD6F7 /* LaunchConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA04432BDE70A9CE144D6CE /* LaunchConfig.swift */; };
 		51F01DCB2D4C1AC8FE1A91F3 /* ProjectValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FAAFA5E198564675DBAC21 /* ProjectValidationTests.swift */; };
 		59ACC177FCB14BC5A444F1EE /* WorkspaceProjectIsolationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0ED5E497C55E2FA3E83CD9 /* WorkspaceProjectIsolationTests.swift */; };
+		5C0B00000000000000000005 /* SourceControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0A00000000000000000005 /* SourceControlTests.swift */; };
 		5C31CC74E40331976E9CCB61 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03AB6D93B36C677EBF0B3A7F /* AppState.swift */; };
 		5F8E2EAAF34B68570A8FCB78 /* WorkspaceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAE4D03BC832EA093551A641 /* WorkspaceModels.swift */; };
 		648965C44BBCF4C6C136B6A1 /* ThemeModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2225E093B82B1BEAF545586C /* ThemeModeTests.swift */; };
@@ -36,6 +35,7 @@
 		6ECD3CAEC5F2D6F621BF41AE /* LiveWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 680089CCD5D3059F68CB957A /* LiveWorkspaceView.swift */; };
 		719300B07EE2390FB5C1D46D /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9C90CF50EA8E5D64761CE88 /* SessionDetailView.swift */; };
 		721E5248DA9472FDF665DEAE /* LogEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = D298101938A5413CB9DCC6E8 /* LogEntry.swift */; };
+		7C0B00000000000000000007 /* SourceControlUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C0A00000000000000000007 /* SourceControlUITests.swift */; };
 		7F1E4F6716064B0CFBDCA8E9 /* TerminalWorkspaceManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 162B1C791DC95E51A11D8786 /* TerminalWorkspaceManagerTests.swift */; };
 		8404B29785C8B2EED01F1AE9 /* WorkbenchSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE0F1B54A0388E1ADAB669F /* WorkbenchSidebar.swift */; };
 		856A2316A3E033F6B0F5A420 /* FlutterProjectMaintenanceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71934A11F27078BB2E195145 /* FlutterProjectMaintenanceService.swift */; };
@@ -70,29 +70,29 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		1C0A00000000000000000001 /* SourceControlModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlModels.swift; sourceTree = "<group>"; };
-		2C0A00000000000000000002 /* GitClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitClient.swift; sourceTree = "<group>"; };
-		3C0A00000000000000000003 /* SourceControlViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlViewModel.swift; sourceTree = "<group>"; };
-		4C0A00000000000000000004 /* SourceControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlView.swift; sourceTree = "<group>"; };
-		5C0A00000000000000000005 /* SourceControlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlTests.swift; sourceTree = "<group>"; };
-		7C0A00000000000000000007 /* SourceControlUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlUITests.swift; sourceTree = "<group>"; };
-		7C0D00000000000000000007 /* FluggerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FluggerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		03AB6D93B36C677EBF0B3A7F /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		0AE0F1B54A0388E1ADAB669F /* WorkbenchSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkbenchSidebar.swift; sourceTree = "<group>"; };
 		0B8DF0CF0FE010E4C7D6DED5 /* ConsoleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsoleView.swift; sourceTree = "<group>"; };
 		0EA04432BDE70A9CE144D6CE /* LaunchConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchConfig.swift; sourceTree = "<group>"; };
 		162B1C791DC95E51A11D8786 /* TerminalWorkspaceManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWorkspaceManagerTests.swift; sourceTree = "<group>"; };
 		1A3C413A46014A6C1787E4BD /* WorkspaceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceStore.swift; sourceTree = "<group>"; };
+		1C0A00000000000000000001 /* SourceControlModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlModels.swift; sourceTree = "<group>"; };
 		2225E093B82B1BEAF545586C /* ThemeModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeModeTests.swift; sourceTree = "<group>"; };
 		265E4F5A4CF73BAE246DA562 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		2C0A00000000000000000002 /* GitClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitClient.swift; sourceTree = "<group>"; };
 		32C57ABE915A4E0827979D2B /* KeyboardShortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcut.swift; sourceTree = "<group>"; };
 		33C1040EF1224A424FB3861D /* Flugger.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Flugger.entitlements; sourceTree = "<group>"; };
+		3C0A00000000000000000003 /* SourceControlViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlViewModel.swift; sourceTree = "<group>"; };
 		4ABEE72C3015BEC5E82FFB38 /* KeyboardShortcutStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutStoreTests.swift; sourceTree = "<group>"; };
+		4C0A00000000000000000004 /* SourceControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlView.swift; sourceTree = "<group>"; };
+		5C0A00000000000000000005 /* SourceControlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlTests.swift; sourceTree = "<group>"; };
 		680089CCD5D3059F68CB957A /* LiveWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveWorkspaceView.swift; sourceTree = "<group>"; };
 		6FB5C4F29E609E3A525A9AD6 /* MultiProjectRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiProjectRunnerTests.swift; sourceTree = "<group>"; };
 		6FDD7151997022F6BBEF75D7 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		71934A11F27078BB2E195145 /* FlutterProjectMaintenanceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlutterProjectMaintenanceService.swift; sourceTree = "<group>"; };
 		755F43520ADF1E76728F9292 /* TerminalWorkspaceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWorkspaceManager.swift; sourceTree = "<group>"; };
+		7C0A00000000000000000007 /* SourceControlUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceControlUITests.swift; sourceTree = "<group>"; };
+		7C0D00000000000000000007 /* FluggerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FluggerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8433814BE09CFAB1AE409DE6 /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
 		88F3D6AFD9D9F4086375B66C /* FlutterDaemon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlutterDaemon.swift; sourceTree = "<group>"; };
 		909D7B729F55900D9E368C8F /* TerminalPaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalPaneView.swift; sourceTree = "<group>"; };
@@ -167,6 +167,23 @@
 			path = Design;
 			sourceTree = "<group>";
 		};
+		6C0A00000000000000000006 /* SourceControl */ = {
+			isa = PBXGroup;
+			children = (
+				4C0A00000000000000000004 /* SourceControlView.swift */,
+			);
+			path = SourceControl;
+			sourceTree = "<group>";
+		};
+		7C0E00000000000000000007 /* FluggerUITests */ = {
+			isa = PBXGroup;
+			children = (
+				7C0A00000000000000000007 /* SourceControlUITests.swift */,
+			);
+			name = FluggerUITests;
+			path = Tests/FluggerUITests;
+			sourceTree = "<group>";
+		};
 		9F0E5889BEB1DE1E5FC89F9B /* Workspace */ = {
 			isa = PBXGroup;
 			children = (
@@ -223,15 +240,6 @@
 			path = Tests/FluggerTests;
 			sourceTree = "<group>";
 		};
-		7C0E00000000000000000007 /* FluggerUITests */ = {
-			isa = PBXGroup;
-			children = (
-				7C0A00000000000000000007 /* SourceControlUITests.swift */,
-			);
-			name = FluggerUITests;
-			path = Tests/FluggerUITests;
-			sourceTree = "<group>";
-		};
 		E084065B7BCA3D5B34DB6A36 = {
 			isa = PBXGroup;
 			children = (
@@ -248,14 +256,6 @@
 				C73ED4F2C7A9BDAFD76D7D17 /* SettingsView.swift */,
 			);
 			path = Settings;
-			sourceTree = "<group>";
-		};
-		6C0A00000000000000000006 /* SourceControl */ = {
-			isa = PBXGroup;
-			children = (
-				4C0A00000000000000000004 /* SourceControlView.swift */,
-			);
-			path = SourceControl;
 			sourceTree = "<group>";
 		};
 		FED200E5547B33292DAC4F8E /* Services */ = {
@@ -342,8 +342,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = E1B001A2C2FA19ADCB961354 /* Build configuration list for PBXProject "Flugger" */;
 			developmentRegion = en;
@@ -446,49 +444,19 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		7C1100000000000000000007 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = C065D9C14285BC70311DB6A0 /* Flugger */;
-			targetProxy = 7C0C00000000000000000007 /* PBXContainerItemProxy */;
-		};
 		688D4A77DDCDFE5AD97ABA7D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C065D9C14285BC70311DB6A0 /* Flugger */;
 			targetProxy = BBCCD3B34FD02B6182712304 /* PBXContainerItemProxy */;
 		};
+		7C1100000000000000000007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C065D9C14285BC70311DB6A0 /* Flugger */;
+			targetProxy = 7C0C00000000000000000007 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		7C1200000000000000000007 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.fluttervibe.FluggerUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SWIFT_VERSION = 5.9;
-				TEST_TARGET_NAME = Flugger;
-			};
-			name = Debug;
-		};
-		7C1300000000000000000007 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.fluttervibe.FluggerUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SWIFT_VERSION = 5.9;
-				TEST_TARGET_NAME = Flugger;
-			};
-			name = Release;
-		};
 		14112B6E3B6810CF5DDA0881 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -611,20 +579,56 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Sources/Flugger/Flugger.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V8V5US964Z;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_CONCURRENCY = YES;
 				INFOPLIST_FILE = Sources/Flugger/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.fluttervibe.Flugger;
+				PRODUCT_BUNDLE_IDENTIFIER = com.flugger.app;
 				PRODUCT_NAME = Flugger;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		7C1200000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fluttervibe.FluggerUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_TARGET_NAME = Flugger;
+			};
+			name = Debug;
+		};
+		7C1300000000000000000007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fluttervibe.FluggerUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_TARGET_NAME = Flugger;
 			};
 			name = Release;
 		};
@@ -633,18 +637,23 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Sources/Flugger/Flugger.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V8V5US964Z;
 				ENABLE_STRICT_CONCURRENCY = YES;
 				INFOPLIST_FILE = Sources/Flugger/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.fluttervibe.Flugger;
+				PRODUCT_BUNDLE_IDENTIFIER = com.flugger.app;
 				PRODUCT_NAME = Flugger;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};
@@ -691,15 +700,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		7C1400000000000000000007 /* Build configuration list for PBXNativeTarget "FluggerUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				7C1200000000000000000007 /* Debug */,
-				7C1300000000000000000007 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
 		3E390EC327689EB35C60E2B1 /* Build configuration list for PBXNativeTarget "Flugger" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -714,6 +714,15 @@
 			buildConfigurations = (
 				DD69FD563A544F2E2D1F0B04 /* Debug */,
 				DCA6CA2FA5B8051F4ABCADC7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7C1400000000000000000007 /* Build configuration list for PBXNativeTarget "FluggerUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7C1200000000000000000007 /* Debug */,
+				7C1300000000000000000007 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

@@ -20,6 +20,7 @@ struct TerminalPaneView: View {
                     focusRevision: manager.focusRevision
                 )
                 .id(selectedTabID)
+                .padding(WorkbenchSpacing.small)
             } else {
                 ContentUnavailableView {
                     Label("No Terminal", systemImage: "terminal")
@@ -89,6 +90,7 @@ struct TerminalResizeDivider: View {
         }
         .frame(height: 8)
         .contentShape(Rectangle())
+        .pointerStyle(.rowResize)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in

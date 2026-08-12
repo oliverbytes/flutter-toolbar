@@ -31,7 +31,7 @@ class FlutterDaemon: ObservableObject {
         
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = ["-lc", "flutter daemon"]
+        process.arguments = ["-ic", "flutter daemon"]
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
         process.standardInput = stdinPipe
@@ -85,6 +85,7 @@ class FlutterDaemon: ObservableObject {
     }
     
     func refreshDevices() {
+        guard isRunning else { return }
         sendRequest(method: "device.getDevices", params: [:])
     }
 
@@ -94,6 +95,7 @@ class FlutterDaemon: ObservableObject {
     }
     
     func launchEmulator(_ emulatorId: String) {
+        guard isRunning else { return }
         sendRequest(method: "emulator.launch", params: ["emulatorId": emulatorId])
     }
     
@@ -171,6 +173,11 @@ class FlutterDaemon: ObservableObject {
         if let error = message.error {
             status = "Daemon error: \(error)"
             onLogOutput?("Daemon error: \(error)", .error)
+            return
+        }
+        
+        if let emulators = message.emulators {
+            devices = emulators
             return
         }
         
