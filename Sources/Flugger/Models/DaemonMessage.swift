@@ -6,7 +6,7 @@ struct DaemonMessage {
     let device: Device?
     let error: String?
     let emulators: [Device]?
-    
+
     static func parse(data: Data) -> [DaemonMessage] {
         guard let array = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
             return []

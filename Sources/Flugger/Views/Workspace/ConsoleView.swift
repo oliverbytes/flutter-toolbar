@@ -3,6 +3,7 @@ import SwiftUI
 
 extension Notification.Name {
     static let focusConsoleSearch = Notification.Name("focusConsoleSearch")
+    static let showFlutterSDKInfo = Notification.Name("showFlutterSDKInfo")
 }
 
 struct ConsoleToolbar: View {
@@ -18,7 +19,7 @@ struct ConsoleToolbar: View {
             narrowToolbar
         }
         .padding(.horizontal, WorkbenchSpacing.medium)
-        .padding(.vertical, WorkbenchSpacing.xs)
+        .padding(.vertical, 2)
         .background(WorkbenchColor.surface)
         .onReceive(NotificationCenter.default.publisher(for: .focusConsoleSearch)) { _ in
             searchFocused = true
@@ -124,16 +125,13 @@ struct ConsoleToolbar: View {
         HStack(spacing: WorkbenchSpacing.small) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(WorkbenchColor.textSecondary)
-            TextField(
-                "Search \(viewModel.selectedLogChannel.label.lowercased())",
+            WorkbenchSearchField(
                 text: Binding(
                     get: { viewModel.searchText },
                     set: { viewModel.searchText = $0 }
-                )
+                ),
+                placeholder: "Search \(viewModel.selectedLogChannel.label.lowercased())"
             )
-                .textFieldStyle(.plain)
-                .workbenchFont(.body)
-                .focused($searchFocused)
             if !viewModel.searchText.isEmpty {
                 Button {
                     viewModel.searchText = ""
@@ -147,10 +145,10 @@ struct ConsoleToolbar: View {
             }
         }
         .padding(.horizontal, WorkbenchSpacing.compact)
-        .frame(height: 36)
-        .background(WorkbenchColor.background, in: RoundedRectangle(cornerRadius: WorkbenchRadius.small))
+        .frame(height: 26)
+        .background(WorkbenchColor.background, in: RoundedRectangle(cornerRadius: WorkbenchRadius.large))
         .overlay {
-            RoundedRectangle(cornerRadius: WorkbenchRadius.small)
+            RoundedRectangle(cornerRadius: WorkbenchRadius.large)
                 .stroke(searchFocused ? WorkbenchColor.accent : WorkbenchColor.divider, lineWidth: 1)
         }
     }
@@ -252,7 +250,7 @@ private struct FilterChip: View {
                 .workbenchFont(.caption, weight: .medium)
                 .foregroundStyle(selected ? WorkbenchColor.textPrimary : WorkbenchColor.textSecondary)
                 .padding(.horizontal, WorkbenchSpacing.small)
-                .frame(minHeight: 32)
+                .frame(height: 26)
                 .background(
                     selected ? WorkbenchColor.accentSoft : .clear,
                     in: Capsule()
@@ -267,44 +265,32 @@ private struct FilterChip: View {
 
 struct ConsolePanel: View {
     @ObservedObject var viewModel: WorkspaceViewModel
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(PreferenceKeys.consoleFontSize) private var consoleFontSize = 12.0
     @AppStorage(PreferenceKeys.showTimestamps) private var showTimestamps = true
     @AppStorage(PreferenceKeys.followOutput) private var followOutput = true
 
     var body: some View {
-        HStack(spacing: 0) {
-            RunStateSpine(state: activityState, reduceMotion: reduceMotion)
-
-            Group {
-                if viewModel.logLines.isEmpty {
-                    LogEmptyState(viewModel: viewModel)
-                } else if viewModel.filteredLogs.isEmpty {
-                    ContentUnavailableView(
-                        "No Matching Output",
-                        systemImage: "line.3.horizontal.decrease.circle",
-                        description: Text("Change the search or enable another log type.")
-                    )
-                } else {
-                    SelectableConsoleTextView(
-                        entries: viewModel.filteredLogs,
-                        fontSize: consoleFontSize,
-                        showTimestamps: showTimestamps,
-                        followOutput: followOutput,
-                        accessibilityLabel: "\(viewModel.selectedLogChannel.label) output"
-                    )
-                }
+        Group {
+            if viewModel.logLines.isEmpty {
+                LogEmptyState(viewModel: viewModel)
+            } else if viewModel.filteredLogs.isEmpty {
+                ContentUnavailableView(
+                    "No Matching Output",
+                    systemImage: "line.3.horizontal.decrease.circle",
+                    description: Text("Change the search or enable another log type.")
+                )
+            } else {
+                SelectableConsoleTextView(
+                    entries: viewModel.filteredLogs,
+                    fontSize: consoleFontSize,
+                    showTimestamps: showTimestamps,
+                    followOutput: followOutput,
+                    accessibilityLabel: "\(viewModel.selectedLogChannel.label) output"
+                )
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(WorkbenchColor.surface)
         }
-    }
-
-    private var activityState: AppState {
-        if viewModel.selectedLogChannel == .output {
-            return viewModel.isCurrentProjectMaintenanceRunning ? .starting : .idle
-        }
-        return viewModel.appState
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(WorkbenchColor.surface)
     }
 }
 
@@ -565,33 +551,6 @@ private struct LogEmptyState: View {
                 systemImage: "terminal",
                 description: Text(viewModel.runBlockReason ?? "Run the selected project to see live Flutter output.")
             )
-        }
-    }
-}
-
-private struct RunStateSpine: View {
-    let state: AppState
-    let reduceMotion: Bool
-    @State private var pulse = false
-
-    var body: some View {
-        Rectangle()
-            .fill(color)
-            .frame(width: 4)
-            .opacity(isTransitioning && pulse ? 0.42 : 1)
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulse)
-            .onAppear { pulse = true }
-            .accessibilityHidden(true)
-    }
-
-    private var isTransitioning: Bool { state == .starting || state == .stopping }
-
-    private var color: Color {
-        switch state {
-        case .idle: WorkbenchColor.divider
-        case .starting, .stopping: WorkbenchColor.accent
-        case .running: WorkbenchColor.success
-        case .error: WorkbenchColor.error
         }
     }
 }

@@ -49,7 +49,7 @@ struct FluggerApp: App {
     private var selectedTheme: ThemeMode { ThemeMode(rawValue: themeMode) ?? .system }
 
     var body: some Scene {
-        WindowGroup("Flugger", id: "workspace") {
+        WindowGroup(id: "workspace") {
             ContentView(viewModel: viewModel, sourceControlViewModel: sourceControlViewModel)
                 .frame(minWidth: 820, minHeight: 520)
                 .preferredColorScheme(selectedTheme.colorScheme)
@@ -130,6 +130,89 @@ private struct WorkbenchCommands: Commands {
             Button("Hot Restart", systemImage: "arrow.triangle.2.circlepath", action: viewModel.hotRestart)
                 .workbenchShortcut(keyboardShortcuts.binding(for: .hotRestart))
                 .disabled(!viewModel.canControl)
+        }
+
+        CommandMenu("Device") {
+            Button("Open iOS Simulator", systemImage: "iphone") {
+                viewModel.openiOSSimulator()
+            }
+
+            Menu("Open Android Emulator") {
+                if viewModel.androidEmulators.isEmpty {
+                    Button("Refresh Emulator List") {
+                        viewModel.refreshEmulators()
+                    }
+                }
+                ForEach(viewModel.androidEmulators) { device in
+                    if viewModel.isEmulatorRunning(device) {
+                        Button("Kill \(device.name)") {
+                            viewModel.killEmulator(device)
+                        }
+                    } else {
+                        Button(device.name) {
+                            viewModel.launchEmulator(device)
+                        }
+                    }
+                }
+            }
+
+            if !viewModel.runningEmulators.isEmpty {
+                Divider()
+
+                Button("Kill All Simulators", systemImage: "xmark.circle") {
+                    viewModel.killAllEmulators()
+                }
+                .workbenchShortcut(keyboardShortcuts.binding(for: .killAllSimulators))
+            }
+        }
+
+        CommandMenu("Tools") {
+            Button("Flutter SDK Info…", systemImage: "info.circle") {
+                NotificationCenter.default.post(name: .showFlutterSDKInfo, object: nil)
+            }
+
+            Divider()
+
+            Menu("Useful Links") {
+                Button("DartPad", systemImage: "play.rectangle") {
+                    viewModel.openLink(URL(string: "https://dartpad.dev")!)
+                }
+                Button("Pub.dev", systemImage: "shippingbox") {
+                    viewModel.openLink(URL(string: "https://pub.dev")!)
+                }
+                Button("Flutter Docs", systemImage: "book") {
+                    viewModel.openLink(URL(string: "https://docs.flutter.dev")!)
+                }
+                Button("Dart Docs", systemImage: "books.vertical") {
+                    viewModel.openLink(URL(string: "https://dart.dev/guides")!)
+                }
+            }
+
+            Divider()
+
+            Button("Open DevTools", systemImage: "wrench.and.screwdriver") {
+                viewModel.openDevTools()
+            }
+            .workbenchShortcut(keyboardShortcuts.binding(for: .openDevTools))
+            .disabled(!viewModel.isDevToolsAvailable)
+
+            Menu("DevTools") {
+                ForEach(DevToolsPage.allCases, id: \.rawValue) { page in
+                    Button(page.label, systemImage: page.systemImage) {
+                        viewModel.openDevTools(page: page)
+                    }
+                    .disabled(!viewModel.isDevToolsAvailable)
+                }
+            }
+            .disabled(!viewModel.isDevToolsAvailable)
+
+            Divider()
+
+            Button("Widget Previewer", systemImage: "square.grid.3x3") {
+                viewModel.openWidgetPreviewer()
+            }
+            .workbenchShortcut(keyboardShortcuts.binding(for: .openWidgetPreviewer))
+            .disabled(!viewModel.isWidgetPreviewerAvailable)
         }
 
         CommandMenu("Terminal") {

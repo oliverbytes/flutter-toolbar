@@ -168,6 +168,12 @@ private struct ShortcutSettingsView: View {
                 }
             }
 
+            Section("Tools") {
+                ForEach(WorkbenchAction.toolsActions) { action in
+                    ShortcutRow(action: action, keyboardShortcuts: keyboardShortcuts)
+                }
+            }
+
             if let validationMessage = keyboardShortcuts.validationMessage {
                 Section {
                     Label(validationMessage, systemImage: "exclamationmark.triangle.fill")

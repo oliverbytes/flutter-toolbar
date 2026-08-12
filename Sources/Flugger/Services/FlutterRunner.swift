@@ -8,6 +8,8 @@ class FlutterRunner: ObservableObject {
     @Published var status: String = "Idle"
     var onLogOutput: ((String, LogEntryType) -> Void)?
     var onCompletion: ((RunOutcome) -> Void)?
+    var onDebugServiceReady: ((String) -> Void)?
+    var onDebugServiceLost: (() -> Void)?
     
     private var process: Process?
     private var stdinPipe = Pipe()
@@ -50,7 +52,7 @@ class FlutterRunner: ObservableObject {
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = ["-lc", command]
+        process.arguments = ["-ic", command]
         process.currentDirectoryURL = URL(fileURLWithPath: projectPath)
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
@@ -82,6 +84,7 @@ class FlutterRunner: ObservableObject {
                 if self.appState != .error {
                     self.appState = .idle
                     self.appId = nil
+                    self.onDebugServiceLost?()
                     if !self.stopRequested {
                         self.status = "App terminated"
                         self.onLogOutput?("App terminated", .info)
@@ -153,6 +156,7 @@ class FlutterRunner: ObservableObject {
             if appState == .stopping {
                 appState = .idle
                 appId = nil
+                onDebugServiceLost?()
                 status = "Stopped"
                 finish(with: .stoppedByUser)
             }
@@ -284,6 +288,9 @@ class FlutterRunner: ObservableObject {
             case "app.debugPort":
                 status = "Debug connected"
                 onLogOutput?("Debug connected", .info)
+                if let uri = message.debugWsUri {
+                    onDebugServiceReady?(uri)
+                }
             case "app.progress":
                 if let msg = message.progressMessage {
                     status = msg
@@ -296,6 +303,7 @@ class FlutterRunner: ObservableObject {
             case "app.stop":
                 appState = .idle
                 appId = nil
+                onDebugServiceLost?()
                 status = "App stopped"
                 onLogOutput?("App stopped", .info)
                 finish(with: stopRequested ? .stoppedByUser : .ended)

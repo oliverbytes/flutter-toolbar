@@ -93,7 +93,7 @@ private struct SetupBar: View {
             RunControlCluster(viewModel: viewModel)
         }
         .padding(.horizontal, WorkbenchSpacing.medium)
-        .padding(.vertical, WorkbenchSpacing.small)
+        .padding(.vertical, 2)
         .background(WorkbenchColor.surface)
     }
 
@@ -118,6 +118,34 @@ private struct SetupBar: View {
                     Label(device.displayName, systemImage: "checkmark")
                 } else {
                     Label(device.displayName, systemImage: device.systemImage)
+                }
+            }
+        }
+        Divider()
+        if !viewModel.runningEmulators.isEmpty {
+            Button("Kill All Simulators", systemImage: "xmark.circle") {
+                viewModel.killAllEmulators()
+            }
+            Divider()
+        }
+        Button("Open iOS Simulator", systemImage: "iphone") {
+            viewModel.openiOSSimulator()
+        }
+        Menu("Open Android Emulator") {
+            if viewModel.androidEmulators.isEmpty {
+                Button("Refresh Emulator List") {
+                    viewModel.refreshEmulators()
+                }
+            }
+            ForEach(viewModel.androidEmulators) { device in
+                if viewModel.isEmulatorRunning(device) {
+                    Button("Kill \(device.name)") {
+                        viewModel.killEmulator(device)
+                    }
+                } else {
+                    Button(device.name) {
+                            viewModel.launchEmulator(device)
+                        }
                 }
             }
         }

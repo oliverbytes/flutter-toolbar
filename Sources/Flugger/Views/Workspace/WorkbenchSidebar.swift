@@ -1,18 +1,32 @@
+import AppKit
 import SwiftUI
 
 struct WorkbenchSidebar: View {
     @ObservedObject var viewModel: WorkspaceViewModel
+    @State private var projectSearchText = ""
+
+    private var filteredProjects: [RecentProject] {
+        let query = projectSearchText.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return viewModel.recentProjects }
+        return viewModel.recentProjects.filter { project in
+            project.displayName.localizedCaseInsensitiveContains(query) ||
+            project.path.localizedCaseInsensitiveContains(query)
+        }
+    }
 
     var body: some View {
         List {
             Section("Projects") {
-                ForEach(viewModel.recentProjects) { project in
+                projectSearchBar
+
+                ForEach(filteredProjects) { project in
                     let isSelected = viewModel.selection == .project(project.path)
                     Button {
                         viewModel.selectWorkspace(.project(project.path))
                     } label: {
                         SidebarProjectRow(
                             project: project,
+                            icon: viewModel.projectIcons[project.path],
                             isCurrent: project.path == viewModel.projectPath,
                             runState: viewModel.runState(for: project.path)
                         )
@@ -63,7 +77,32 @@ struct WorkbenchSidebar: View {
         }
         .listStyle(.sidebar)
         .scrollIndicators(.never)
-        .navigationTitle("Flugger")
+    }
+
+    private var projectSearchBar: some View {
+        HStack(spacing: WorkbenchSpacing.small) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(WorkbenchColor.textSecondary)
+            WorkbenchSearchField(text: $projectSearchText, placeholder: "Filter projects")
+            if !projectSearchText.isEmpty {
+                Button {
+                    projectSearchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(WorkbenchColor.textSecondary)
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.horizontal, WorkbenchSpacing.compact)
+        .frame(height: 26)
+        .background(WorkbenchColor.background, in: RoundedRectangle(cornerRadius: WorkbenchRadius.large))
+        .overlay {
+            RoundedRectangle(cornerRadius: WorkbenchRadius.large)
+                .stroke(WorkbenchColor.divider, lineWidth: 1)
+        }
+        .padding(.bottom, WorkbenchSpacing.medium)
     }
 }
 
@@ -87,14 +126,23 @@ private struct SidebarSelectionBackground: View {
 
 private struct SidebarProjectRow: View {
     let project: RecentProject
+    let icon: NSImage?
     let isCurrent: Bool
     let runState: AppState
 
     var body: some View {
         HStack(spacing: WorkbenchSpacing.small) {
-            Image(systemName: isCurrent ? "folder.fill" : "folder")
-                .frame(width: 18)
-                .foregroundStyle(isCurrent ? WorkbenchColor.accent : WorkbenchColor.textSecondary)
+            Group {
+                if let icon {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                } else {
+                    Image(systemName: isCurrent ? "folder.fill" : "folder")
+                        .foregroundStyle(isCurrent ? WorkbenchColor.accent : WorkbenchColor.textSecondary)
+                }
+            }
+            .frame(width: 18, height: 18)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(project.displayName)
@@ -201,10 +249,52 @@ private struct SidebarSessionItem: View {
     }
 }
 
-private extension String {
+extension String {
     var abbreviatingWithTildeInPath: String {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         guard hasPrefix(home) else { return self }
         return "~" + dropFirst(home.count)
+    }
+}
+
+struct WorkbenchSearchField: NSViewRepresentable {
+    @Binding var text: String
+    var placeholder: String
+
+    func makeNSView(context: Context) -> NSTextField {
+        let field = NSTextField()
+        field.drawsBackground = false
+        field.focusRingType = .none
+        field.isBordered = false
+        field.font = .systemFont(ofSize: NSFont.systemFontSize)
+        field.placeholderAttributedString = NSAttributedString(
+            string: placeholder,
+            attributes: [.foregroundColor: NSColor.secondaryLabelColor]
+        )
+        field.delegate = context.coordinator
+        return field
+    }
+
+    func updateNSView(_ nsView: NSTextField, context: Context) {
+        if nsView.stringValue != text {
+            nsView.stringValue = text
+        }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text)
+    }
+
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        var text: Binding<String>
+
+        init(text: Binding<String>) {
+            self.text = text
+        }
+
+        func controlTextDidChange(_ obj: Notification) {
+            guard let field = obj.object as? NSTextField else { return }
+            text.wrappedValue = field.stringValue
+        }
     }
 }

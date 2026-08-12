@@ -12,11 +12,17 @@ enum DaemonState: Equatable {
 @MainActor
 class FlutterDaemon: ObservableObject {
     @Published var devices: [Device] = []
+    @Published var emulators: [Device] = []
     @Published var isRunning = false
     @Published var state: DaemonState = .idle
     @Published var status: String = ""
     var onLogOutput: ((String, LogEntryType) -> Void)?
     
+    var runningEmulatorIds: Set<String> {
+        let connectedIds = Set(devices.map(\.id))
+        return Set(emulators.filter { connectedIds.contains($0.id) }.map(\.id))
+    }
+
     private var process: Process?
     private var stdoutPipe = Pipe()
     private var stdinPipe = Pipe()
@@ -52,6 +58,7 @@ class FlutterDaemon: ObservableObject {
                 let exitCode = process.terminationStatus
                 self?.isRunning = false
                 self?.devices.removeAll()
+                self?.emulators.removeAll()
                 if exitCode == 0 {
                     self?.state = .stopped
                     self?.status = "Daemon stopped"
@@ -104,6 +111,7 @@ class FlutterDaemon: ObservableObject {
         state = .stopped
         status = "Daemon stopped"
         devices.removeAll()
+        emulators.removeAll()
     }
     
     func refreshDevices() {
@@ -117,8 +125,140 @@ class FlutterDaemon: ObservableObject {
     }
     
     func launchEmulator(_ emulatorId: String) {
-        guard isRunning else { return }
-        sendRequest(method: "emulator.launch", params: ["emulatorId": emulatorId])
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        process.arguments = ["-ic", "flutter emulators --launch \(emulatorId)"]
+
+        let errorPipe = Pipe()
+        process.standardError = errorPipe
+        process.standardOutput = FileHandle.nullDevice
+
+        process.terminationHandler = { [weak self] process in
+            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+            Task { @MainActor in
+                if process.terminationStatus != 0 {
+                    let msg = String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown"
+                    self?.onLogOutput?("Failed to launch emulator: \(msg)", .error)
+                }
+            }
+        }
+
+        do { try process.run() }
+        catch { onLogOutput?("Failed to launch emulator: \(error.localizedDescription)", .error) }
+    }
+
+    func getEmulators() {
+        Task.detached { [weak self] in
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+            process.arguments = ["-ic", "flutter emulators"]
+
+            let outputPipe = Pipe()
+            let errorPipe = Pipe()
+            process.standardOutput = outputPipe
+            process.standardError = errorPipe
+
+            do {
+                try process.run()
+                process.waitUntilExit()
+            } catch {
+                await MainActor.run {
+                    self?.onLogOutput?("getEmulators: failed to run: \(error.localizedDescription)", .error)
+                }
+                return
+            }
+
+            let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
+            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+            await MainActor.run {
+                if process.terminationStatus != 0 {
+                    let msg = String(data: errorData, encoding: .utf8)?
+                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? "exit code \(process.terminationStatus)"
+                    self?.onLogOutput?("getEmulators: \(msg)", .error)
+                    return
+                }
+                guard let output = String(data: data, encoding: .utf8) else {
+                    self?.onLogOutput?("getEmulators: could not decode output", .error)
+                    return
+                }
+
+                let result = Self.parseEmulatorTable(output)
+                self?.onLogOutput?("getEmulators: Parsed \(result.count) emulators: \(result.map { "\($0.name)(\($0.platform))" }.joined(separator: ", "))", .info)
+                self?.emulators = result
+            }
+        }
+    }
+
+    private nonisolated static func parseEmulatorTable(_ output: String) -> [Device] {
+        let lines = output.components(separatedBy: "\n")
+        guard let headerIndex = lines.firstIndex(where: { $0.contains("•") }) else { return [] }
+
+        var emulators: [Device] = []
+        for line in lines[(headerIndex + 1)...] {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty, !trimmed.hasPrefix("To run"), !trimmed.hasPrefix("To create"),
+                  !trimmed.hasPrefix("You can find") else { if trimmed.isEmpty { continue } else { break } }
+
+            let columns = trimmed.components(separatedBy: "•").map { $0.trimmingCharacters(in: .whitespaces) }
+            guard columns.count >= 2 else { continue }
+
+            let id = columns[0]
+            let name = columns[1]
+            let platform = columns.count >= 4 ? columns[3].lowercased() : ""
+
+            emulators.append(Device(
+                id: id,
+                name: name,
+                platform: platform,
+                platformType: nil,
+                category: nil,
+                emulator: true,
+                emulatorId: id,
+                ephemeral: nil
+            ))
+        }
+        return emulators
+    }
+
+    func killEmulator(_ device: Device) {
+        let platform = device.platform.lowercased()
+        let deviceId = device.id
+
+        let executable: String
+        let arguments: [String]
+
+        if platform.contains("ios") {
+            executable = "/usr/bin/xcrun"
+            arguments = ["simctl", "shutdown", deviceId]
+        } else if platform.contains("android") {
+            executable = "/usr/bin/env"
+            arguments = ["adb", "-s", deviceId, "emu", "kill"]
+        } else {
+            onLogOutput?("Cannot kill device on platform \(device.platform)", .error)
+            return
+        }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = arguments
+        process.terminationHandler = { [weak self] process in
+            let exitCode = process.terminationStatus
+            Task { @MainActor in
+                if exitCode == 0 {
+                    self?.onLogOutput?("Killed \(device.displayName)", .info)
+                } else {
+                    self?.onLogOutput?("Failed to kill \(device.displayName) (exit code \(exitCode))", .error)
+                }
+            }
+        }
+
+        do {
+            try process.run()
+            onLogOutput?("Killing \(device.displayName)...", .info)
+        } catch {
+            onLogOutput?("Failed to kill \(device.displayName): \(error.localizedDescription)", .error)
+        }
     }
     
     private func sendRequest(method: String, params: [String: Any]) {
@@ -197,12 +337,7 @@ class FlutterDaemon: ObservableObject {
             onLogOutput?("Daemon error: \(error)", .error)
             return
         }
-        
-        if let emulators = message.emulators {
-            devices = emulators
-            return
-        }
-        
+
         if let event = message.event {
             switch event {
             case "device.added":
@@ -222,6 +357,7 @@ class FlutterDaemon: ObservableObject {
                 state = .connected
                 status = "Daemon connected"
                 onLogOutput?("Daemon connected", .info)
+                getEmulators()
             case "daemon.logMessage":
                 break
             default:

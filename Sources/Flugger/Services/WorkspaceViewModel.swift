@@ -9,6 +9,7 @@ final class WorkspaceViewModel: ObservableObject {
     @Published private(set) var projectPath: String?
     @Published private(set) var projectName = "No Project"
     @Published private(set) var devices: [Device] = []
+    @Published private(set) var emulators: [Device] = []
     @Published private(set) var launchConfigs: [LaunchConfig] = []
     @Published var selectedDeviceId: String?
     @Published var selectedLaunchConfigName: String?
@@ -18,6 +19,7 @@ final class WorkspaceViewModel: ObservableObject {
     @Published private(set) var recentProjects: [RecentProject] = []
     @Published private(set) var sessions: [RunSession] = []
     @Published private(set) var projectRunStates: [String: AppState] = [:]
+    @Published private(set) var projectIcons: [String: NSImage] = [:]
     @Published var selection: WorkspaceSelection = .console
     @Published private(set) var selectedLogChannel: LogChannel = .console
     @Published private var searchTextByChannel: [LogChannel: String] = [
@@ -31,8 +33,10 @@ final class WorkspaceViewModel: ObservableObject {
     @Published var isCleanConfirmationPresented = false
     @Published private(set) var isProjectMaintenanceRunning = false
     @Published private(set) var activeMaintenanceProjectPath: String?
+    @Published private(set) var debugVmServiceUri: String?
 
     let terminalWorkspaces: TerminalWorkspaceManager
+    let sdkInfoService = FlutterSDKInfoService()
 
     private let daemon: FlutterDaemon
     private let store: WorkspaceStore
@@ -82,6 +86,7 @@ final class WorkspaceViewModel: ObservableObject {
         terminalWorkspaces = TerminalWorkspaceManager(projects: snapshot.recentProjects)
         recentProjects = snapshot.recentProjects
         sessions = snapshot.sessions
+        preloadIcons(for: recentProjects)
 
         terminalWorkspaces.onSnapshotChange = { [weak self] projectPath, terminalSnapshot in
             self?.persistTerminalWorkspace(terminalSnapshot, for: projectPath)
@@ -111,6 +116,8 @@ final class WorkspaceViewModel: ObservableObject {
         } else {
             status = "Ready"
         }
+
+        Task { await sdkInfoService.refresh() }
     }
 
     var isAppRunning: Bool { appState.isRunning }
@@ -119,10 +126,16 @@ final class WorkspaceViewModel: ObservableObject {
     var canMaintainProject: Bool { projectPath != nil && !isAppRunning && !isProjectMaintenanceRunning }
     var isDaemonRunning: Bool { daemon.isRunning }
     var daemonState: DaemonState { daemon.state }
+    var runningEmulatorIds: Set<String> { daemon.runningEmulatorIds }
+    var iosEmulators: [Device] { emulators.filter { $0.platform.lowercased().contains("ios") } }
+    var androidEmulators: [Device] { emulators.filter { $0.platform.lowercased().contains("android") } }
+    var runningEmulators: [Device] { emulators.filter { isEmulatorRunning($0) } }
     var hasRunningProjects: Bool { projectRunStates.values.contains(where: \.isRunning) }
     var isTerminalAvailable: Bool {
         projectPath != nil && selectedSession == nil
     }
+    var isDevToolsAvailable: Bool { debugVmServiceUri != nil }
+    var isWidgetPreviewerAvailable: Bool { projectPath != nil }
 
     func runState(for projectPath: String) -> AppState {
         projectRunStates[projectPath] ?? .idle
@@ -266,6 +279,12 @@ final class WorkspaceViewModel: ObservableObject {
         if isFirstProjectLog {
             addLog("Project: \(name)", type: .command, projectPath: path)
         }
+
+        refreshEmulators()
+
+        if projectIcons[path] == nil {
+            projectIcons[path] = FlutterAppIconService.extractIcon(from: path)
+        }
     }
 
     func selectDevice(_ id: String?) {
@@ -338,6 +357,12 @@ final class WorkspaceViewModel: ObservableObject {
         }
         newRunner.onCompletion = { [weak self] outcome in
             self?.finalizeActiveRun(for: projectPath, runID: runID, outcome: outcome)
+        }
+        newRunner.onDebugServiceReady = { [weak self] uri in
+            self?.debugVmServiceUri = uri
+        }
+        newRunner.onDebugServiceLost = { [weak self] in
+            self?.debugVmServiceUri = nil
         }
 
         var cancellables = Set<AnyCancellable>()
@@ -471,6 +496,59 @@ final class WorkspaceViewModel: ObservableObject {
 
     func refreshDevices() { daemon.refreshDevices() }
 
+    func isEmulatorRunning(_ device: Device) -> Bool {
+        runningEmulatorIds.contains(device.id)
+    }
+
+    func launchEmulator(_ device: Device) {
+        daemon.launchEmulator(device.emulatorId ?? device.id)
+    }
+
+    func killEmulator(_ device: Device) {
+        guard isEmulatorRunning(device) else { return }
+        daemon.killEmulator(device)
+    }
+
+    func killAllEmulators() {
+        for device in runningEmulators {
+            daemon.killEmulator(device)
+        }
+    }
+
+    func refreshEmulators() { daemon.getEmulators() }
+
+    func openDevTools() {
+        guard let uri = debugVmServiceUri else { return }
+        DevToolsLauncher.open(vmServiceUri: uri) { [weak self] message in
+            self?.addLog(message, type: .info)
+        }
+    }
+
+    func openDevTools(page: DevToolsPage) {
+        guard let uri = debugVmServiceUri else { return }
+        DevToolsLauncher.open(page: page, vmServiceUri: uri) { [weak self] message in
+            self?.addLog(message, type: .info)
+        }
+    }
+
+    func openWidgetPreviewer() {
+        guard let projectPath else { return }
+        WidgetPreviewerLauncher.open(projectPath: projectPath) { [weak self] message, type in
+            self?.addLog(message, type: type)
+        }
+    }
+
+    func openLink(_ url: URL) {
+        NSWorkspace.shared.open(url)
+    }
+
+    func openiOSSimulator() {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        process.arguments = ["-a", "Simulator"]
+        try? process.run()
+    }
+
     func restartDaemon() { daemon.restart() }
 
     func toggleTerminal() {
@@ -541,6 +619,13 @@ final class WorkspaceViewModel: ObservableObject {
             }
             .store(in: &daemonCancellables)
 
+        daemon.$emulators
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] emulators in
+                self?.emulators = emulators.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+            }
+            .store(in: &daemonCancellables)
+
         daemon.$status
             .receive(on: DispatchQueue.main)
             .sink { [weak self] daemonStatus in
@@ -566,6 +651,12 @@ final class WorkspaceViewModel: ObservableObject {
         try? persistProject(project)
     }
 
+    private func preloadIcons(for projects: [RecentProject]) {
+        for project in projects where projectIcons[project.path] == nil {
+            projectIcons[project.path] = FlutterAppIconService.extractIcon(from: project.path)
+        }
+    }
+
     private func persistProject(_ project: RecentProject, promote: Bool = true) throws {
         if promote {
             _ = try store.upsert(project, in: &snapshot)
@@ -574,6 +665,7 @@ final class WorkspaceViewModel: ObservableObject {
         }
         recentProjects = snapshot.recentProjects
         terminalWorkspaces.retainProjects(Set(recentProjects.map(\.path)))
+        preloadIcons(for: recentProjects)
     }
 
     private func persistTerminalWorkspace(

@@ -22,6 +22,10 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
     case pushSourceControl
     case increaseAppFontSize
     case decreaseAppFontSize
+    case killAllSimulators
+    case refreshEmulators
+    case openDevTools
+    case openWidgetPreviewer
 
     var id: String { rawValue }
 
@@ -48,6 +52,10 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
         case .pushSourceControl: "Push"
         case .increaseAppFontSize: "Increase App Font Size"
         case .decreaseAppFontSize: "Decrease App Font Size"
+        case .killAllSimulators: "Kill All Simulators"
+        case .refreshEmulators: "Refresh Emulators"
+        case .openDevTools: "Open DevTools"
+        case .openWidgetPreviewer: "Open Widget Previewer"
         }
     }
 
@@ -71,6 +79,8 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
         .pullSourceControl,
         .pushSourceControl,
     ]
+    static let deviceActions: [WorkbenchAction] = [.killAllSimulators, .refreshEmulators]
+    static let toolsActions: [WorkbenchAction] = [.openDevTools, .openWidgetPreviewer]
 }
 
 enum ShortcutModifier: String, CaseIterable, Codable, Identifiable {
@@ -246,6 +256,14 @@ extension WorkbenchAction {
             WorkbenchShortcut(key: .plus, modifiers: [.command])
         case .decreaseAppFontSize:
             WorkbenchShortcut(key: .minus, modifiers: [.command])
+        case .killAllSimulators:
+            WorkbenchShortcut(key: .k, modifiers: [.command, .shift])
+        case .refreshEmulators:
+            WorkbenchShortcut(key: .i, modifiers: [.command, .shift])
+        case .openDevTools:
+            WorkbenchShortcut(key: .d, modifiers: [.command])
+        case .openWidgetPreviewer:
+            WorkbenchShortcut(key: .p, modifiers: [.command, .shift])
         }
     }
 }

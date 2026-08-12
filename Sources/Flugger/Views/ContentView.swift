@@ -8,6 +8,7 @@ struct ContentView: View {
     @EnvironmentObject private var keyboardShortcuts: KeyboardShortcutStore
     @State private var columnVisibility: NavigationSplitViewVisibility = .detailOnly
     @State private var isSourceControlSheetPresented = false
+    @State private var showSDKInfoPopover = false
     @AppStorage(PreferenceKeys.themeMode) private var themeMode = ThemeMode.system.rawValue
 
     private var selectedTheme: ThemeMode { ThemeMode(rawValue: themeMode) ?? .system }
@@ -36,6 +37,8 @@ struct ContentView: View {
                         sourceControlViewModel: sourceControlViewModel,
                         isSourceControlSheetPresented: $isSourceControlSheetPresented
                     )
+                    .navigationTitle(viewModel.projectName)
+                    .navigationSubtitle(viewModel.projectPath?.abbreviatingWithTildeInPath ?? "")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -73,6 +76,15 @@ struct ContentView: View {
                 .accessibilityValue(isTerminalVisible ? "Visible" : "Hidden")
 
                 Button {
+                    showSDKInfoPopover = true
+                } label: {
+                    Label("Flutter SDK Info", systemImage: "info.circle")
+                        .labelStyle(.iconOnly)
+                }
+                .workbenchTooltip("Flutter SDK Info", placement: .below)
+                .accessibilityLabel("Flutter SDK Info")
+
+                Button {
                     themeMode = nextTheme.rawValue
                 } label: {
                     Label("Cycle Appearance", systemImage: selectedTheme.icon)
@@ -99,6 +111,15 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .showSourceControlSheet)) { _ in
             isSourceControlSheetPresented = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showFlutterSDKInfo)) { _ in
+            showSDKInfoPopover = true
+        }
+        .sheet(isPresented: $showSDKInfoPopover) {
+            FlutterSDKInfoSheet(
+                service: viewModel.sdkInfoService,
+                onOpenLink: viewModel.openLink(_:)
+            )
         }
         .sheet(isPresented: $isSourceControlSheetPresented) {
             VStack(spacing: 0) {

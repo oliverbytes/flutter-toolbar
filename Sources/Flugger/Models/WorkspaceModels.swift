@@ -125,3 +125,46 @@ enum WorkspaceValidationError: LocalizedError, Equatable {
         }
     }
 }
+
+struct FlutterCLICommandGroup: Identifiable {
+    let id = UUID()
+    let name: String
+    let commands: [FlutterCLICommand]
+}
+
+struct FlutterCLICommand: Identifiable {
+    let id = UUID()
+    let name: String
+    let systemImage: String
+    let arguments: [String]
+
+    static let groups: [FlutterCLICommandGroup] = [
+        FlutterCLICommandGroup(name: "Dependencies", commands: [
+            FlutterCLICommand(name: "Pub Get", systemImage: "arrow.down.doc", arguments: ["pub", "get"]),
+            FlutterCLICommand(name: "Pub Upgrade", systemImage: "arrow.up.doc", arguments: ["pub", "upgrade"]),
+            FlutterCLICommand(name: "Pub Outdated", systemImage: "clock.arrow.circlepath", arguments: ["pub", "outdated"]),
+        ]),
+        FlutterCLICommandGroup(name: "Tools", commands: [
+            FlutterCLICommand(name: "Devices", systemImage: "laptopcomputer.and.iphone", arguments: ["devices"]),
+            FlutterCLICommand(name: "Emulators", systemImage: "rectangle.on.rectangle", arguments: ["emulators"]),
+            FlutterCLICommand(name: "Logs", systemImage: "text.alignleft", arguments: ["logs"]),
+        ]),
+        FlutterCLICommandGroup(name: "Analysis & Testing", commands: [
+            FlutterCLICommand(name: "Analyze", systemImage: "magnifyingglass.circle", arguments: ["analyze"]),
+            FlutterCLICommand(name: "Test", systemImage: "checklist", arguments: ["test"]),
+            FlutterCLICommand(name: "Drive", systemImage: "car", arguments: ["drive"]),
+        ]),
+        FlutterCLICommandGroup(name: "Build", commands: [
+            FlutterCLICommand(name: "Build APK", systemImage: "android", arguments: ["build", "apk"]),
+            FlutterCLICommand(name: "Build App Bundle", systemImage: "archivebox", arguments: ["build", "appbundle"]),
+            FlutterCLICommand(name: "Build IPA", systemImage: "apple.logo", arguments: ["build", "ipa"]),
+            FlutterCLICommand(name: "Build Web", systemImage: "globe", arguments: ["build", "web"]),
+            FlutterCLICommand(name: "Build macOS", systemImage: "macbook", arguments: ["build", "macos"]),
+            FlutterCLICommand(name: "Build Windows", systemImage: "pc", arguments: ["build", "windows"]),
+            FlutterCLICommand(name: "Build Linux", systemImage: "terminal", arguments: ["build", "linux"]),
+        ]),
+        FlutterCLICommandGroup(name: "SDK", commands: [
+            FlutterCLICommand(name: "Flutter Upgrade", systemImage: "arrow.triangle.2.circlepath", arguments: ["upgrade"]),
+        ]),
+    ]
+}

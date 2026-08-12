@@ -86,8 +86,8 @@ final class FlutterProjectMaintenanceService: FlutterProjectMaintaining {
         stderrBuffer = ""
 
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["flutter"] + arguments
+        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        process.arguments = ["-ic", (["flutter"] + arguments).joined(separator: " ")]
         process.currentDirectoryURL = URL(fileURLWithPath: projectPath)
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
