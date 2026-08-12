@@ -1,6 +1,6 @@
 import AppKit
 import XCTest
-@testable import Flugger
+@testable import Flunner
 
 @MainActor
 final class TerminalWorkspaceManagerTests: XCTestCase {

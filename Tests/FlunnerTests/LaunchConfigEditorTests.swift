@@ -1,12 +1,12 @@
 import XCTest
-@testable import Flugger
+@testable import Flunner
 
 final class LaunchConfigEditorTests: XCTestCase {
     private var temporaryDirectory: URL!
 
     override func setUpWithError() throws {
         temporaryDirectory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FluggerLaunchConfigTests-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("FlunnerLaunchConfigTests-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: temporaryDirectory, withIntermediateDirectories: true)
     }
 

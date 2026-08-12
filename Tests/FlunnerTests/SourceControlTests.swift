@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Flugger
+@testable import Flunner
 
 @Suite("Git status parsing")
 struct GitStatusParserTests {
@@ -61,9 +61,9 @@ struct GitProcessClientIntegrationTests {
     @Test("Stages, commits, branches, diffs, history, stashes, and publishes")
     func repositoryWorkflow() async throws {
         let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FluggerGitClient-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("FlunnerGitClient-\(UUID().uuidString)", isDirectory: true)
         let remote = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FluggerGitRemote-\(UUID().uuidString).git", isDirectory: true)
+            .appendingPathComponent("FlunnerGitRemote-\(UUID().uuidString).git", isDirectory: true)
         defer {
             try? FileManager.default.removeItem(at: root)
             try? FileManager.default.removeItem(at: remote)
@@ -72,7 +72,7 @@ struct GitProcessClientIntegrationTests {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         try runGit(["init", "--bare", remote.path], at: FileManager.default.temporaryDirectory)
         try runGit(["init", "--initial-branch=main"], at: root)
-        try runGit(["config", "user.name", "Flugger Tests"], at: root)
+        try runGit(["config", "user.name", "Flunner Tests"], at: root)
         try runGit(["config", "user.email", "tests@flugger.local"], at: root)
         try runGit(["remote", "add", "origin", remote.path], at: root)
 

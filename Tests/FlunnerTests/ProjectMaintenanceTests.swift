@@ -1,5 +1,5 @@
 import XCTest
-@testable import Flugger
+@testable import Flunner
 
 @MainActor
 final class ProjectMaintenanceTests: XCTestCase {
@@ -154,7 +154,7 @@ final class ProjectMaintenanceTests: XCTestCase {
         maintenance: MockProjectMaintenance
     ) {
         let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FluggerMaintenance-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("FlunnerMaintenance-\(UUID().uuidString)", isDirectory: true)
         let project = root.appendingPathComponent("Demo", isDirectory: true)
         let dataDirectory = root.appendingPathComponent("Data", isDirectory: true)
         try FileManager.default.createDirectory(at: project, withIntermediateDirectories: true)

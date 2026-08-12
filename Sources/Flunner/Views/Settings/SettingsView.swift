@@ -19,7 +19,7 @@ struct SettingsView: View {
 
     private var copyright: String {
         Bundle.main.infoDictionary?["NSHumanReadableCopyright"] as? String
-            ?? "Copyright © 2025 Flugger. All rights reserved."
+            ?? "Copyright © 2025 Flunner. All rights reserved."
     }
 
     var body: some View {
@@ -32,7 +32,7 @@ struct SettingsView: View {
                             .frame(width: 64, height: 64)
 
                         VStack(alignment: .leading, spacing: WorkbenchSpacing.xs) {
-                            Text("Flugger")
+                            Text("Flunner")
                                 .font(.headline)
                             Text("Version \(appVersion) (\(buildNumber))")
                                 .workbenchFont(.body)

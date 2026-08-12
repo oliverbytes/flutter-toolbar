@@ -39,7 +39,7 @@ enum ThemeMode: String, CaseIterable {
 }
 
 @main
-struct FluggerApp: App {
+struct FlunnerApp: App {
     @StateObject private var viewModel = WorkspaceViewModel()
     @StateObject private var sourceControlViewModel = SourceControlViewModel()
     @StateObject private var keyboardShortcuts = KeyboardShortcutStore()

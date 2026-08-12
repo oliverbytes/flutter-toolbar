@@ -38,7 +38,7 @@ struct SessionDetailView: View {
                     VStack(alignment: .leading, spacing: WorkbenchSpacing.xs) {
                         Text("Console output was not stored")
                             .workbenchFont(.heading)
-                        Text("Flugger keeps session metadata only. Console text remains in memory during the current app launch and is discarded when Flugger quits.")
+                        Text("Flunner keeps session metadata only. Console text remains in memory during the current app launch and is discarded when Flunner quits.")
                             .workbenchFont(.body)
                             .foregroundStyle(WorkbenchColor.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)

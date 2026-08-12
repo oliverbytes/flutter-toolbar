@@ -2,14 +2,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "Flugger",
+    name: "Flunner",
     platforms: [
         .macOS("15.0")
     ],
     products: [
         .executable(
-            name: "Flugger",
-            targets: ["Flugger"]
+            name: "Flunner",
+            targets: ["Flunner"]
         ),
     ],
     dependencies: [
@@ -20,14 +20,14 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "Flugger",
+            name: "Flunner",
             dependencies: [
                 .product(name: "SwiftTerm", package: "SwiftTerm"),
             ],
-            path: "Sources/Flugger",
+            path: "Sources/Flunner",
             exclude: [
                 "Info.plist",
-                "Flugger.entitlements",
+                "Flunner.entitlements",
                 "Assets.xcassets",
                 "Design/AppIconMaster.png"
             ],
@@ -39,9 +39,9 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "FluggerTests",
-            dependencies: ["Flugger"],
-            path: "Tests/FluggerTests"
+            name: "FlunnerTests",
+            dependencies: ["Flunner"],
+            path: "Tests/FlunnerTests"
         ),
     ]
 )

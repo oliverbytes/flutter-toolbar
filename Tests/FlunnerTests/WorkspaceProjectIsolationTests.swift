@@ -1,11 +1,11 @@
 import XCTest
-@testable import Flugger
+@testable import Flunner
 
 @MainActor
 final class WorkspaceProjectIsolationTests: XCTestCase {
     func testSwitchingProjectsPreservesOrderAndRestoresEachConsole() throws {
         let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FluggerProjectIsolation-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("FlunnerProjectIsolation-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
         let first = try makeFlutterProject(named: "First", under: root)
@@ -38,7 +38,7 @@ final class WorkspaceProjectIsolationTests: XCTestCase {
 
     func testProjectBuffersShareTheGlobalTenThousandLineLimit() throws {
         let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FluggerGlobalLogCap-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("FlunnerGlobalLogCap-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
         let first = try makeFlutterProject(named: "First", under: root)
@@ -70,7 +70,7 @@ final class WorkspaceProjectIsolationTests: XCTestCase {
 
     func testSwitchingProjectsRestoresConsoleAndOutputIndependently() throws {
         let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FluggerChannelIsolation-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("FlunnerChannelIsolation-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
         let first = try makeFlutterProject(named: "First", under: root)

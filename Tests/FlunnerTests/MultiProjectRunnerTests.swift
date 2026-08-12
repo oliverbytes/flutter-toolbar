@@ -1,11 +1,11 @@
 import XCTest
-@testable import Flugger
+@testable import Flunner
 
 @MainActor
 final class MultiProjectRunnerTests: XCTestCase {
     func testEachProjectOwnsIndependentRunControlsAndHistory() async throws {
         let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FluggerMultiRunner-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("FlunnerMultiRunner-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
         let first = try makeFlutterProject(named: "First", under: root)

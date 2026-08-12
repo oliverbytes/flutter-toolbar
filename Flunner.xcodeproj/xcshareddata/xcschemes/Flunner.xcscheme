@@ -15,10 +15,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C065D9C14285BC70311DB6A0"
-               BuildableName = "Flugger.app"
-               BlueprintName = "Flugger"
-               ReferencedContainer = "container:Flugger.xcodeproj">
+               BlueprintIdentifier = "A97F7261DD6810EC7C3F9EAB"
+               BuildableName = "Flunner.app"
+               BlueprintName = "Flunner"
+               ReferencedContainer = "container:Flunner.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -32,10 +32,10 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C065D9C14285BC70311DB6A0"
-            BuildableName = "Flugger.app"
-            BlueprintName = "Flugger"
-            ReferencedContainer = "container:Flugger.xcodeproj">
+            BlueprintIdentifier = "A97F7261DD6810EC7C3F9EAB"
+            BuildableName = "Flunner.app"
+            BlueprintName = "Flunner"
+            ReferencedContainer = "container:Flunner.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -44,10 +44,10 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ADE0B8CD35A8545A962E9CF4"
-               BuildableName = "FluggerTests.xctest"
-               BlueprintName = "FluggerTests"
-               ReferencedContainer = "container:Flugger.xcodeproj">
+               BlueprintIdentifier = "93FDAF7C34F92FD34FF77B28"
+               BuildableName = "FlunnerTests.xctest"
+               BlueprintName = "FlunnerTests"
+               ReferencedContainer = "container:Flunner.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -68,10 +68,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C065D9C14285BC70311DB6A0"
-            BuildableName = "Flugger.app"
-            BlueprintName = "Flugger"
-            ReferencedContainer = "container:Flugger.xcodeproj">
+            BlueprintIdentifier = "A97F7261DD6810EC7C3F9EAB"
+            BuildableName = "Flunner.app"
+            BlueprintName = "Flunner"
+            ReferencedContainer = "container:Flunner.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>
@@ -87,10 +87,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C065D9C14285BC70311DB6A0"
-            BuildableName = "Flugger.app"
-            BlueprintName = "Flugger"
-            ReferencedContainer = "container:Flugger.xcodeproj">
+            BlueprintIdentifier = "A97F7261DD6810EC7C3F9EAB"
+            BuildableName = "Flunner.app"
+            BlueprintName = "Flunner"
+            ReferencedContainer = "container:Flunner.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>

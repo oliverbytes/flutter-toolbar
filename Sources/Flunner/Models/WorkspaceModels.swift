@@ -121,7 +121,7 @@ enum WorkspaceValidationError: LocalizedError, Equatable {
         case .missingDirectory: "The project folder no longer exists."
         case .missingPubspec: "This folder does not contain pubspec.yaml."
         case .notFlutterProject: "The selected folder is not a Flutter project."
-        case .unreadableProject: "Flugger could not read this project."
+        case .unreadableProject: "Flunner could not read this project."
         }
     }
 }

@@ -120,7 +120,7 @@ struct SourceControlView: View {
 
     private var confirmationMessage: String {
         switch viewModel.confirmation {
-        case .discard: "Git will restore the selected tracked files. These working changes cannot be recovered by Flugger."
+        case .discard: "Git will restore the selected tracked files. These working changes cannot be recovered by Flunner."
         case .trash: "The selected untracked files will be moved to the Trash and can be recovered from Finder."
         case .deleteBranch: "Only fully merged local branches can be deleted. Remote branches are not affected."
         case .merge: "Git will merge the selected branch without opening an editor. Conflicts remain in the workspace for you to resolve."
@@ -128,7 +128,7 @@ struct SourceControlView: View {
         case .dropStash: "The stash will be permanently removed."
         case .revert: "Git will create a new commit that reverses this commit. Existing history will not be rewritten."
         case .abort: "Git will stop the in-progress operation and restore its pre-operation state."
-        case .amend: "This replaces the latest commit and rewrites its commit ID. If it was already pushed, a normal push will be rejected; Flugger never force-pushes."
+        case .amend: "This replaces the latest commit and rewrites its commit ID. If it was already pushed, a normal push will be rejected; Flunner never force-pushes."
         case nil: "Review the action before continuing."
         }
     }
@@ -814,7 +814,7 @@ private struct DiffDetailView: View {
                     ContentUnavailableView {
                         Label("Binary File", systemImage: "doc.zipper")
                     } description: {
-                        Text("Flugger can’t display a text diff for this file.")
+                        Text("Flunner can’t display a text diff for this file.")
                     }
                     .foregroundStyle(WorkbenchColor.textPrimary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

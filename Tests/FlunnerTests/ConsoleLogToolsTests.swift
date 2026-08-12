@@ -1,5 +1,5 @@
 import XCTest
-@testable import Flugger
+@testable import Flunner
 
 final class ConsoleLogToolsTests: XCTestCase {
     private let entries = [
@@ -26,7 +26,7 @@ final class ConsoleLogToolsTests: XCTestCase {
     @MainActor
     func testWorkspaceCapsInMemoryLogBuffer() {
         let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FluggerLogCap-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("FlunnerLogCap-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: directory) }
 
         let viewModel = WorkspaceViewModel(

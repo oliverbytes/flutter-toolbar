@@ -1,5 +1,5 @@
 import XCTest
-@testable import Flugger
+@testable import Flunner
 
 @MainActor
 final class KeyboardShortcutStoreTests: XCTestCase {

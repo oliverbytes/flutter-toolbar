@@ -1,8 +1,8 @@
-# Flugger Brand Specification
+# Flunner Brand Specification
 
 ## Brand idea
 
-Flugger is a calm, focused workbench for the tight Flutter run–observe–reload loop. It should feel like a dependable macOS instrument: warm, precise, and fast without looking like a terminal theme or an official Flutter product.
+Flunner is a calm, focused workbench for the tight Flutter run–observe–reload loop. It should feel like a dependable macOS instrument: warm, precise, and fast without looking like a terminal theme or an official Flutter product.
 
 ## Color system
 

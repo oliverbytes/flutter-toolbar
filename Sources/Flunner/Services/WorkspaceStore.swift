@@ -20,7 +20,7 @@ final class WorkspaceStore {
     init(directoryURL: URL? = nil, fileManager: FileManager = .default) {
         self.fileManager = fileManager
         let directory = directoryURL ?? fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Flugger", isDirectory: true)
+            .appendingPathComponent("Flunner", isDirectory: true)
         fileURL = directory.appendingPathComponent("workspace.json")
 
         encoder = JSONEncoder()

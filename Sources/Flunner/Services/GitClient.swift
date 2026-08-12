@@ -401,7 +401,7 @@ struct GitProcessClient: GitClientProtocol {
     ) throws -> GitCommandOutput {
         let fileManager = FileManager.default
         let temporaryDirectory = fileManager.temporaryDirectory
-            .appendingPathComponent("FluggerGit-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("FlunnerGit-\(UUID().uuidString)", isDirectory: true)
         try fileManager.createDirectory(at: temporaryDirectory, withIntermediateDirectories: true)
         defer { try? fileManager.removeItem(at: temporaryDirectory) }
 
