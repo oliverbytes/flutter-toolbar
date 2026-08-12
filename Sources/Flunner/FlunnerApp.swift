@@ -59,7 +59,12 @@ struct FlunnerApp: App {
         .defaultSize(width: 1120, height: 1440)
         .windowToolbarStyle(.unified)
         .commands {
-            CommandGroup(replacing: .newItem) { }
+            CommandGroup(replacing: .newItem) {
+                Button("Open Flutter Project…") {
+                    viewModel.chooseProject()
+                }
+                .keyboardShortcut("O", modifiers: .command)
+            }
             SidebarCommands()
             WorkbenchCommands(
                 viewModel: viewModel,

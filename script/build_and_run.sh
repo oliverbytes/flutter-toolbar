@@ -2,8 +2,8 @@
 set -euo pipefail
 
 MODE="${1:-run}"
-APP_NAME="Flugger"
-BUNDLE_ID="com.fluttervibe.Flugger"
+APP_NAME="Flunner"
+BUNDLE_ID="com.flunner.app"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DERIVED_DATA="$ROOT_DIR/.build/xcode-run"
@@ -14,7 +14,7 @@ pkill -x "$APP_NAME" >/dev/null 2>&1 || true
 
 xcodebuild \
   -quiet \
-  -project "$ROOT_DIR/Flugger.xcodeproj" \
+  -project "$ROOT_DIR/Flunner.xcodeproj" \
   -scheme "$APP_NAME" \
   -configuration Debug \
   -derivedDataPath "$DERIVED_DATA" \

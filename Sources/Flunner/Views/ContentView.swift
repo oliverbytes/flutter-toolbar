@@ -9,7 +9,9 @@ struct ContentView: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .detailOnly
     @State private var isSourceControlSheetPresented = false
     @State private var showSDKInfoPopover = false
+    @State private var showOnboarding = false
     @AppStorage(PreferenceKeys.themeMode) private var themeMode = ThemeMode.system.rawValue
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     private var selectedTheme: ThemeMode { ThemeMode(rawValue: themeMode) ?? .system }
     private var nextTheme: ThemeMode { selectedTheme.next }
@@ -105,7 +107,19 @@ struct ContentView: View {
                 .accessibilityLabel("Settings")
             }
         }
-        .onAppear { sourceControlViewModel.setProjectPath(viewModel.projectPath) }
+        .onAppear {
+            sourceControlViewModel.setProjectPath(viewModel.projectPath)
+            if !hasCompletedOnboarding {
+                showOnboarding = true
+            }
+        }
+        .sheet(isPresented: $showOnboarding) {
+            OnboardingView(viewModel: viewModel) {
+                showOnboarding = false
+                hasCompletedOnboarding = true
+            }
+            .interactiveDismissDisabled()
+        }
         .onChange(of: viewModel.projectPath) { _, path in
             sourceControlViewModel.setProjectPath(path)
         }

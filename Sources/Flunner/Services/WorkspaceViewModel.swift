@@ -31,6 +31,7 @@ final class WorkspaceViewModel: ObservableObject {
         .output: Set(LogEntryType.allCases),
     ]
     @Published var isCleanConfirmationPresented = false
+    @Published var lastValidationError: WorkspaceValidationError?
     @Published private(set) var isProjectMaintenanceRunning = false
     @Published private(set) var activeMaintenanceProjectPath: String?
     @Published private(set) var debugVmServiceUri: String?
@@ -231,7 +232,13 @@ final class WorkspaceViewModel: ObservableObject {
             .standardizedFileURL
             .resolvingSymlinksInPath()
             .path
-        try Self.validateProject(at: path)
+        do {
+            try Self.validateProject(at: path)
+        } catch let error as WorkspaceValidationError {
+            lastValidationError = error
+            throw error
+        }
+        lastValidationError = nil
 
         let name = URL(fileURLWithPath: path).lastPathComponent
         let parsedConfigs = LaunchConfig.parse(from: path)
@@ -559,6 +566,10 @@ final class WorkspaceViewModel: ObservableObject {
     func toggleTerminal() {
         guard isTerminalAvailable, let projectPath else { return }
         terminalWorkspaces.toggle(for: projectPath)
+    }
+
+    func clearValidationError() {
+        lastValidationError = nil
     }
 
     func retryDaemon() {
