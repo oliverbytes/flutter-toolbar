@@ -29,8 +29,6 @@ struct SourceControlView: View {
         }
         .background(WorkbenchColor.background)
         .accessibilityIdentifier("sourceControlWorkspace")
-        .onAppear(perform: viewModel.startPolling)
-        .onDisappear(perform: viewModel.stopPolling)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             viewModel.refreshAfterActivation()
         }

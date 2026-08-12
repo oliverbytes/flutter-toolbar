@@ -186,13 +186,8 @@ private struct WorkbenchCommands: Commands {
         }
 
         CommandMenu("Source Control") {
-            Button("Show Console", systemImage: "terminal") {
-                NotificationCenter.default.post(name: .showConsoleWorkspace, object: nil)
-            }
-            .workbenchShortcut(keyboardShortcuts.binding(for: .showConsole))
-
-            Button("Show Source Control", systemImage: "arrow.triangle.branch") {
-                NotificationCenter.default.post(name: .showSourceControlWorkspace, object: nil)
+            Button("Show Source Control…", systemImage: "arrow.triangle.branch") {
+                NotificationCenter.default.post(name: .showSourceControlSheet, object: nil)
             }
             .workbenchShortcut(keyboardShortcuts.binding(for: .showSourceControl))
 

@@ -112,8 +112,13 @@ final class SourceControlViewModel: ObservableObject {
         if let oldRoot = snapshot?.rootURL.path { commitDrafts[oldRoot] = commitMessage }
         projectURL = newURL
         resetRepositoryState()
-        refresh()
+        stopPolling()
+        if newURL != nil {
+            startPolling()
+        }
     }
+
+    var projectPath: String? { projectURL?.path }
 
     func startPolling() {
         guard pollingTask == nil else { return }
@@ -565,6 +570,5 @@ final class SourceControlViewModel: ObservableObject {
 }
 
 extension Notification.Name {
-    static let showConsoleWorkspace = Notification.Name("showConsoleWorkspace")
-    static let showSourceControlWorkspace = Notification.Name("showSourceControlWorkspace")
+    static let showSourceControlSheet = Notification.Name("showSourceControlSheet")
 }

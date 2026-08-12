@@ -2,10 +2,14 @@ import SwiftUI
 
 struct LiveWorkspaceView: View {
     @ObservedObject var viewModel: WorkspaceViewModel
+    @ObservedObject var sourceControlViewModel: SourceControlViewModel
     @ObservedObject private var terminalWorkspaces: TerminalWorkspaceManager
+    @Binding var isSourceControlSheetPresented: Bool
 
-    init(viewModel: WorkspaceViewModel) {
+    init(viewModel: WorkspaceViewModel, sourceControlViewModel: SourceControlViewModel, isSourceControlSheetPresented: Binding<Bool>) {
         self.viewModel = viewModel
+        self.sourceControlViewModel = sourceControlViewModel
+        self._isSourceControlSheetPresented = isSourceControlSheetPresented
         terminalWorkspaces = viewModel.terminalWorkspaces
     }
 
@@ -46,7 +50,11 @@ struct LiveWorkspaceView: View {
                         .frame(height: CGFloat(paneHeight))
                 }
 
-                WorkbenchStatusBar(viewModel: viewModel)
+                WorkbenchStatusBar(
+                    viewModel: viewModel,
+                    sourceControlViewModel: sourceControlViewModel,
+                    isSourceControlSheetPresented: $isSourceControlSheetPresented
+                )
             }
             .background(WorkbenchColor.background)
         }

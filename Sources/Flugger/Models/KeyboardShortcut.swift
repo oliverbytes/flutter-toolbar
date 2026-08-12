@@ -64,7 +64,6 @@ enum WorkbenchAction: String, CaseIterable, Codable, Identifiable {
     static let terminalActions: [WorkbenchAction] = [.toggleTerminal]
     static let appearanceActions: [WorkbenchAction] = [.increaseAppFontSize, .decreaseAppFontSize]
     static let sourceControlActions: [WorkbenchAction] = [
-        .showConsole,
         .showSourceControl,
         .stageAllChanges,
         .commitStagedChanges,

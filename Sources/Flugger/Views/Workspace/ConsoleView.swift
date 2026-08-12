@@ -81,6 +81,7 @@ struct ConsoleToolbar: View {
             }
         }
         .pickerStyle(.segmented)
+        .labelsHidden()
         .frame(width: width)
         .accessibilityLabel("Log Channel")
     }
@@ -597,10 +598,14 @@ private struct RunStateSpine: View {
 
 struct WorkbenchStatusBar: View {
     @ObservedObject var viewModel: WorkspaceViewModel
+    @ObservedObject var sourceControlViewModel: SourceControlViewModel
+    @Binding var isSourceControlSheetPresented: Bool
     @AppStorage(PreferenceKeys.consoleFontSize) private var consoleFontSize = 12.0
 
     var body: some View {
         HStack(spacing: WorkbenchSpacing.small) {
+            gitGlance
+
             Circle().fill(statusColor).frame(width: 8, height: 8)
             Text(viewModel.status)
                 .workbenchFont(.caption, weight: .medium)
@@ -640,6 +645,45 @@ struct WorkbenchStatusBar: View {
         .frame(height: 44)
         .background(WorkbenchColor.background)
         .overlay(alignment: .top) { Divider().overlay(WorkbenchColor.divider) }
+    }
+
+    @ViewBuilder
+    private var gitGlance: some View {
+        if let snapshot = sourceControlViewModel.snapshot {
+            Button {
+                isSourceControlSheetPresented = true
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.triangle.branch")
+                        .font(.system(size: 10, weight: .medium))
+                    Text(snapshot.branch)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    if snapshot.ahead > 0 {
+                        Text("↑\(snapshot.ahead)")
+                            .foregroundStyle(WorkbenchColor.accent)
+                    }
+                    if snapshot.behind > 0 {
+                        Text("↓\(snapshot.behind)")
+                            .foregroundStyle(WorkbenchColor.warning)
+                    }
+                    if snapshot.changeCount > 0 {
+                        Text("\(snapshot.changeCount) files")
+                            .foregroundStyle(WorkbenchColor.warning)
+                    }
+                }
+                .workbenchFont(.caption, weight: .medium)
+                .foregroundStyle(WorkbenchColor.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .workbenchTooltip("View source control (⌘2)", placement: .above)
+            .accessibilityLabel("Source Control: \(snapshot.branch)")
+            .accessibilityValue("\(snapshot.changeCount) files changed")
+        } else if sourceControlViewModel.projectPath != nil {
+            Label("No Repository", systemImage: "arrow.triangle.branch")
+                .workbenchFont(.caption)
+                .foregroundStyle(WorkbenchColor.textSecondary.opacity(0.6))
+        }
     }
 
     private var statusColor: Color {

@@ -1,26 +1,5 @@
 import Foundation
 
-enum WorkspaceMode: String, CaseIterable, Identifiable {
-    case console
-    case sourceControl
-
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .console: "Console"
-        case .sourceControl: "Source Control"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .console: "terminal"
-        case .sourceControl: "arrow.triangle.branch"
-        }
-    }
-}
-
 enum SourceControlSection: String, CaseIterable, Identifiable {
     case changes
     case history
