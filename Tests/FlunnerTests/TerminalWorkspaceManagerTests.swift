@@ -79,15 +79,18 @@ final class TerminalWorkspaceManagerTests: XCTestCase {
         let project = RecentProject(path: "/tmp/project", terminalWorkspace: restored)
         let factory = FakeTerminalSessionFactory()
         let manager = TerminalWorkspaceManager(projects: [project], sessionFactory: factory)
+        var expected = restored
+        expected.isVisible = false
 
         XCTAssertTrue(factory.sessions.isEmpty)
-        XCTAssertEqual(manager.snapshot(for: project.path), restored)
+        XCTAssertEqual(manager.snapshot(for: project.path), expected)
 
         manager.activateProject(project.path)
 
         XCTAssertEqual(Set(factory.sessions.keys), [firstID, secondID])
         XCTAssertEqual(manager.selectedTabID(for: project.path), secondID)
         XCTAssertEqual(manager.snapshot(for: project.path).paneHeight, 340)
+        XCTAssertEqual(manager.snapshot(for: project.path).isVisible, false)
     }
 
     func testShellExitClosesTabAndFinalExitHidesPane() throws {
@@ -139,6 +142,7 @@ private final class FakeTerminalSession: TerminalSession {
     func applyAppearance(fontSize: CGFloat, foreground: NSColor, background: NSColor, caret: NSColor) { }
     func focus() { }
     func terminate() { terminateCount += 1 }
+    func sendText(_ text: String) { }
     func emitTitle(_ title: String) { titleChanged(title) }
     func finish(exitCode: Int32?) { terminated(exitCode) }
 }

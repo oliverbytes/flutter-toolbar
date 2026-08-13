@@ -124,17 +124,17 @@ private struct WorkbenchCommands: Commands {
 
             Button("Stop", systemImage: "stop.fill", action: viewModel.stopApp)
                 .workbenchShortcut(keyboardShortcuts.binding(for: .stop))
-                .disabled(!viewModel.isAppRunning)
+                .disabled(!viewModel.canStopSelectedRun)
 
             Divider()
 
             Button("Hot Reload", systemImage: "bolt.fill", action: viewModel.hotReload)
                 .workbenchShortcut(keyboardShortcuts.binding(for: .hotReload))
-                .disabled(!viewModel.canControl)
+                .disabled(!viewModel.canControlSelectedRun)
 
             Button("Hot Restart", systemImage: "arrow.triangle.2.circlepath", action: viewModel.hotRestart)
                 .workbenchShortcut(keyboardShortcuts.binding(for: .hotRestart))
-                .disabled(!viewModel.canControl)
+                .disabled(!viewModel.canControlSelectedRun)
         }
 
         CommandMenu("Device") {

@@ -13,8 +13,14 @@ final class ConsoleLogToolsTests: XCTestCase {
         XCTAssertEqual(result.map(\.text), ["Build ERROR in widget"])
     }
 
-    func testEmptyTypeSelectionReturnsNoRows() {
-        XCTAssertTrue(ConsoleLogTools.filter(entries, query: "", enabledTypes: []).isEmpty)
+    func testEmptyTypeSelectionShowsAllRows() {
+        let result = ConsoleLogTools.filter(entries, query: "", enabledTypes: [])
+        XCTAssertEqual(result.map(\.text), entries.map(\.text))
+    }
+
+    func testEmptyTypeSelectionStillHonorsSearch() {
+        let result = ConsoleLogTools.filter(entries, query: "connected", enabledTypes: [])
+        XCTAssertEqual(result.map(\.text), ["Connected to device"])
     }
 
     func testExportIncludesTimestampTypeAndMessage() {

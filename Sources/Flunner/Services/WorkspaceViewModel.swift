@@ -18,7 +18,8 @@ final class WorkspaceViewModel: ObservableObject {
     @Published private(set) var logLines: [LogEntry] = []
     @Published private(set) var recentProjects: [RecentProject] = []
     @Published private(set) var sessions: [RunSession] = []
-    @Published private(set) var projectRunStates: [String: AppState] = [:]
+    @Published private(set) var liveRuns: [LiveRun] = []
+    @Published private(set) var selectedLiveRunID: UUID?
     @Published private(set) var projectIcons: [String: NSImage] = [:]
     @Published var selection: WorkspaceSelection = .console
     @Published private(set) var selectedLogChannel: LogChannel = .console
@@ -44,11 +45,12 @@ final class WorkspaceViewModel: ObservableObject {
     private let projectMaintenance: FlutterProjectMaintaining
     private let runnerFactory: @MainActor (String, String) -> FlutterRunner
     private var snapshot: WorkspaceSnapshot
-    private var runnersByProject: [String: FlutterRunner] = [:]
-    private var runnerCancellablesByProject: [String: Set<AnyCancellable>] = [:]
+    private var runnersByRunID: [UUID: FlutterRunner] = [:]
+    private var runnerCancellablesByRunID: [UUID: Set<AnyCancellable>] = [:]
     private var projectStatuses: [String: String] = [:]
+    private var runStatuses: [UUID: String] = [:]
+    private var debugURIsByRunID: [UUID: String] = [:]
     private var daemonCancellables = Set<AnyCancellable>()
-    private var activeRunsByProject: [String: ActiveRun] = [:]
     private var logsByBuffer: [LogBufferKey: [LogEntry]] = [:]
     private var rolledOverLogKeys: Set<LogBufferKey> = []
 
@@ -57,16 +59,6 @@ final class WorkspaceViewModel: ObservableObject {
     private struct LogBufferKey: Hashable {
         let projectKey: String
         let channel: LogChannel
-    }
-
-    private struct ActiveRun {
-        let id: UUID
-        let projectPath: String
-        let projectName: String
-        let deviceId: String
-        let deviceName: String
-        let configurationName: String
-        let startedAt: Date
     }
 
     init(
@@ -121,9 +113,34 @@ final class WorkspaceViewModel: ObservableObject {
         Task { await sdkInfoService.refresh() }
     }
 
-    var isAppRunning: Bool { appState.isRunning }
-    var canControl: Bool { appState.canControl }
-    var canRun: Bool { projectPath != nil && selectedDeviceId != nil && !isAppRunning && !isProjectMaintenanceRunning }
+    var selectedLiveRun: LiveRun? {
+        guard let id = selectedLiveRunID else { return nil }
+        return liveRuns.first { $0.id == id }
+    }
+
+    var currentProjectLiveRuns: [LiveRun] {
+        guard let projectPath else { return [] }
+        return liveRuns.filter { $0.projectPath == projectPath }
+    }
+
+    var isAppRunning: Bool {
+        currentProjectLiveRuns.contains { $0.state.isRunning }
+    }
+
+    var canControl: Bool {
+        selectedLiveRun?.state.canControl == true
+    }
+
+    var canStopSelectedRun: Bool {
+        guard let run = selectedLiveRun else { return false }
+        return run.state == .running || run.state == .starting
+    }
+
+    var canControlSelectedRun: Bool {
+        selectedLiveRun?.state.canControl == true
+    }
+
+    var canRun: Bool { projectPath != nil && selectedDeviceId != nil && !isProjectMaintenanceRunning }
     var canMaintainProject: Bool { projectPath != nil && !isAppRunning && !isProjectMaintenanceRunning }
     var isDaemonRunning: Bool { daemon.isRunning }
     var daemonState: DaemonState { daemon.state }
@@ -131,19 +148,30 @@ final class WorkspaceViewModel: ObservableObject {
     var iosEmulators: [Device] { emulators.filter { $0.platform.lowercased().contains("ios") } }
     var androidEmulators: [Device] { emulators.filter { $0.platform.lowercased().contains("android") } }
     var runningEmulators: [Device] { emulators.filter { isEmulatorRunning($0) } }
-    var hasRunningProjects: Bool { projectRunStates.values.contains(where: \.isRunning) }
+    var hasRunningProjects: Bool { liveRuns.contains { $0.state.isRunning } }
     var isTerminalAvailable: Bool {
         projectPath != nil && selectedSession == nil
     }
     var isDevToolsAvailable: Bool { debugVmServiceUri != nil }
     var isWidgetPreviewerAvailable: Bool { projectPath != nil }
 
+    func liveRuns(for projectPath: String) -> [LiveRun] {
+        liveRuns.filter { $0.projectPath == projectPath }
+    }
+
     func runState(for projectPath: String) -> AppState {
-        projectRunStates[projectPath] ?? .idle
+        guard let run = liveRuns.first(where: { $0.projectPath == projectPath }) else { return .idle }
+        return run.state
     }
 
     func isProjectRunning(_ projectPath: String) -> Bool {
-        runState(for: projectPath).isRunning
+        liveRuns(for: projectPath).contains { $0.state.isRunning }
+    }
+
+    func selectLiveRun(_ id: UUID) {
+        guard liveRuns.contains(where: { $0.id == id }) else { return }
+        selectedLiveRunID = id
+        syncDerivedRunState()
     }
 
     var selectedDevice: Device? {
@@ -180,7 +208,6 @@ final class WorkspaceViewModel: ObservableObject {
         if projectPath == nil { return "Choose a Flutter project first." }
         if isProjectMaintenanceRunning { return "Project maintenance is in progress." }
         if selectedDeviceId == nil { return "Choose a connected device first." }
-        if isAppRunning { return "This project is already active." }
         return nil
     }
 
@@ -280,8 +307,8 @@ final class WorkspaceViewModel: ObservableObject {
         try persistProject(project, promote: promoteInRecents)
 
         if updateSelection { selection = .project(path) }
-        appState = projectRunStates[path] ?? .idle
-        status = projectStatuses[path] ?? "Ready to run \(name)"
+        selectedLiveRunID = liveRuns(for: path).first?.id
+        syncDerivedRunState(fallbackStatus: projectStatuses[path] ?? "Ready to run \(name)")
         terminalWorkspaces.activateProject(path)
         if isFirstProjectLog {
             addLog("Project: \(name)", type: .command, projectPath: path)
@@ -344,69 +371,80 @@ final class WorkspaceViewModel: ObservableObject {
     func runApp() {
         guard canRun, let projectPath, let device = selectedDevice else { return }
 
+        clearProjectLogs(for: projectPath)
         showLiveLogs(.console, for: projectPath)
 
         let configName = selectedLaunchConfig?.displayName ?? "Debug"
         let runID = UUID()
-        activeRunsByProject[projectPath] = ActiveRun(
+        let liveRun = LiveRun(
             id: runID,
             projectPath: projectPath,
             projectName: projectName,
             deviceId: device.id,
             deviceName: device.displayName,
             configurationName: configName,
-            startedAt: .now
+            startedAt: .now,
+            state: .idle
         )
+        liveRuns.append(liveRun)
+        selectedLiveRunID = runID
 
         let newRunner = runnerFactory(projectPath, device.id)
         newRunner.onLogOutput = { [weak self] message, type in
             self?.addLog(message, type: type, projectPath: projectPath)
         }
         newRunner.onCompletion = { [weak self] outcome in
-            self?.finalizeActiveRun(for: projectPath, runID: runID, outcome: outcome)
+            self?.finalizeLiveRun(id: runID, outcome: outcome)
         }
         newRunner.onDebugServiceReady = { [weak self] uri in
-            self?.debugVmServiceUri = uri
+            self?.debugURIsByRunID[runID] = uri
+            self?.syncDerivedRunState()
         }
         newRunner.onDebugServiceLost = { [weak self] in
-            self?.debugVmServiceUri = nil
+            self?.debugURIsByRunID[runID] = nil
+            self?.syncDerivedRunState()
         }
 
         var cancellables = Set<AnyCancellable>()
         newRunner.$appState
             .sink { [weak self, weak newRunner] state in
-                guard let self, let newRunner, self.runnersByProject[projectPath] === newRunner else { return }
-                self.projectRunStates[projectPath] = state
-                if self.projectPath == projectPath { self.appState = state }
+                guard let self, let newRunner, self.runnersByRunID[runID] === newRunner else { return }
+                self.updateLiveRunState(state, for: runID)
             }
             .store(in: &cancellables)
         newRunner.$status
             .sink { [weak self, weak newRunner] status in
-                guard let self, let newRunner, self.runnersByProject[projectPath] === newRunner else { return }
-                self.projectStatuses[projectPath] = status
-                if self.projectPath == projectPath { self.status = status }
+                guard let self, let newRunner, self.runnersByRunID[runID] === newRunner else { return }
+                self.runStatuses[runID] = status
+                if self.selectedLiveRunID == runID { self.status = status }
             }
             .store(in: &cancellables)
 
-        runnersByProject[projectPath] = newRunner
-        runnerCancellablesByProject[projectPath] = cancellables
+        runnersByRunID[runID] = newRunner
+        runnerCancellablesByRunID[runID] = cancellables
         selection = .project(projectPath)
+        syncDerivedRunState()
         newRunner.start(with: selectedLaunchConfig)
     }
 
     func stopApp() {
-        guard let projectPath else { return }
-        runnersByProject[projectPath]?.stop()
+        guard let run = selectedLiveRun ?? currentProjectLiveRuns.first,
+              let runner = runnersByRunID[run.id] else { return }
+        runner.stop()
     }
 
     func hotReload() {
-        guard let projectPath, let runner = runnersByProject[projectPath] else { return }
+        guard let run = selectedLiveRun ?? currentProjectLiveRuns.first,
+              let projectPath,
+              let runner = runnersByRunID[run.id] else { return }
         showLiveLogs(.console, for: projectPath)
         runner.hotReload()
     }
 
     func hotRestart() {
-        guard let projectPath, let runner = runnersByProject[projectPath] else { return }
+        guard let run = selectedLiveRun ?? currentProjectLiveRuns.first,
+              let projectPath,
+              let runner = runnersByRunID[run.id] else { return }
         showLiveLogs(.console, for: projectPath)
         runner.hotRestart()
     }
@@ -706,17 +744,27 @@ final class WorkspaceViewModel: ObservableObject {
         try? persistProject(project, promote: false)
     }
 
-    private func finalizeActiveRun(for projectPath: String, runID: UUID, outcome: RunOutcome) {
-        guard let activeRun = activeRunsByProject[projectPath], activeRun.id == runID else { return }
-        activeRunsByProject[projectPath] = nil
+    private func finalizeLiveRun(id: UUID, outcome: RunOutcome) {
+        guard let index = liveRuns.firstIndex(where: { $0.id == id }) else { return }
+        let run = liveRuns[index]
+        liveRuns.remove(at: index)
+        runnersByRunID[id] = nil
+        runnerCancellablesByRunID[id] = nil
+        runStatuses[id] = nil
+        debugURIsByRunID[id] = nil
+
+        if selectedLiveRunID == id {
+            selectedLiveRunID = currentProjectLiveRuns.first?.id
+        }
+
         let session = RunSession(
-            id: activeRun.id,
-            projectPath: activeRun.projectPath,
-            projectName: activeRun.projectName,
-            deviceId: activeRun.deviceId,
-            deviceName: activeRun.deviceName,
-            configurationName: activeRun.configurationName,
-            startedAt: activeRun.startedAt,
+            id: run.id,
+            projectPath: run.projectPath,
+            projectName: run.projectName,
+            deviceId: run.deviceId,
+            deviceName: run.deviceName,
+            configurationName: run.configurationName,
+            startedAt: run.startedAt,
             endedAt: .now,
             outcome: outcome
         )
@@ -728,9 +776,43 @@ final class WorkspaceViewModel: ObservableObject {
             addLog(
                 "Could not save run history: \(error.localizedDescription)",
                 type: .error,
-                projectPath: activeRun.projectPath
+                projectPath: run.projectPath
             )
         }
+
+        syncDerivedRunState()
+    }
+
+    private func updateLiveRunState(_ state: AppState, for id: UUID) {
+        guard let index = liveRuns.firstIndex(where: { $0.id == id }) else { return }
+        liveRuns[index].state = state
+        if selectedLiveRunID == id {
+            appState = state
+            if state == .idle {
+                status = "Ready to run \(projectName)"
+            } else {
+                status = runStatuses[id] ?? status
+            }
+        }
+    }
+
+    private func syncDerivedRunState(fallbackStatus: String? = nil) {
+        guard let run = selectedLiveRun else {
+            appState = .idle
+            debugVmServiceUri = nil
+            if let fallbackStatus {
+                status = fallbackStatus
+            } else if let projectPath {
+                status = projectStatuses[projectPath] ?? "Ready to run \(projectName)"
+            } else {
+                status = "Ready"
+            }
+            return
+        }
+
+        appState = run.state
+        status = runStatuses[run.id] ?? (run.state == .idle ? "Ready to run \(run.projectName)" : "Preparing run…")
+        debugVmServiceUri = debugURIsByRunID[run.id]
     }
 
     private func performProjectMaintenance(_ operation: FlutterProjectMaintenanceOperation) {
@@ -807,6 +889,15 @@ final class WorkspaceViewModel: ObservableObject {
     private func showLiveLogs(_ channel: LogChannel, for projectPath: String) {
         selection = .project(projectPath)
         selectLogChannel(channel)
+    }
+
+    private func clearProjectLogs(for projectPath: String) {
+        for channel in LogChannel.allCases {
+            let key = LogBufferKey(projectKey: projectPath, channel: channel)
+            logsByBuffer[key] = []
+            rolledOverLogKeys.remove(key)
+        }
+        refreshVisibleLogs()
     }
 
     func addLog(

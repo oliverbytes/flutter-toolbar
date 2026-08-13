@@ -52,8 +52,10 @@ enum ConsoleLogTools {
         enabledTypes: Set<LogEntryType>
     ) -> [LogEntry] {
         let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Empty selection means "no type filter" — show every type.
+        let typeFilterActive = !enabledTypes.isEmpty
         return entries.filter { entry in
-            guard enabledTypes.contains(entry.type) else { return false }
+            if typeFilterActive, !enabledTypes.contains(entry.type) { return false }
             return needle.isEmpty || entry.text.localizedCaseInsensitiveContains(needle)
         }
     }

@@ -84,6 +84,91 @@ final class MultiProjectRunnerTests: XCTestCase {
         XCTAssertEqual(viewModel.sessions.count, 2)
     }
 
+    func testConcurrentRunsInSameProjectUseSeparateSessionsAndSharedLogs() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("FlunnerConcurrentSameProject-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let project = try makeFlutterProject(named: "Concurrent", under: root)
+        let daemon = FlutterDaemon()
+        var runners: [UUID: MockFlutterRunner] = [:]
+        let viewModel = WorkspaceViewModel(
+            store: WorkspaceStore(directoryURL: root.appendingPathComponent("Data", isDirectory: true)),
+            daemon: daemon,
+            startDaemon: false,
+            restoreLastProject: false,
+            runnerFactory: { projectPath, deviceID in
+                let runner = MockFlutterRunner(projectPath: projectPath, deviceId: deviceID)
+                runners[UUID()] = runner
+                return runner
+            }
+        )
+        daemon.devices = [testDevice]
+        for _ in 0..<10 where viewModel.devices.isEmpty {
+            await Task.yield()
+        }
+
+        try viewModel.openProject(at: project.path)
+        viewModel.selectDevice(testDevice.id)
+        viewModel.selectConfiguration("Debug")
+        viewModel.runApp()
+
+        let firstLiveRun = viewModel.selectedLiveRun
+        XCTAssertEqual(viewModel.liveRuns(for: project.path).count, 1)
+        XCTAssertTrue(viewModel.canRun)
+
+        viewModel.selectConfiguration("Profile")
+        viewModel.runApp()
+
+        let runs = viewModel.liveRuns(for: project.path)
+        XCTAssertEqual(runs.count, 2)
+        XCTAssertNotEqual(runs[0].id, runs[1].id)
+        XCTAssertTrue(viewModel.canRun)
+        XCTAssertEqual(viewModel.currentProjectLiveRuns.count, 2)
+
+        viewModel.selectLiveRun(firstLiveRun!.id)
+        viewModel.stopApp()
+
+        XCTAssertEqual(viewModel.liveRuns(for: project.path).count, 1)
+        XCTAssertEqual(viewModel.sessions.count, 1)
+        XCTAssertTrue(viewModel.isProjectRunning(project.path))
+    }
+
+    func testRunAppClearsConsoleAndOutputLogs() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("FlunnerClearLogsOnRun-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let project = try makeFlutterProject(named: "ClearLogs", under: root)
+        let daemon = FlutterDaemon()
+        let viewModel = WorkspaceViewModel(
+            store: WorkspaceStore(directoryURL: root.appendingPathComponent("Data", isDirectory: true)),
+            daemon: daemon,
+            startDaemon: false,
+            restoreLastProject: false,
+            runnerFactory: { projectPath, deviceID in
+                MockFlutterRunner(projectPath: projectPath, deviceId: deviceID)
+            }
+        )
+        daemon.devices = [testDevice]
+        for _ in 0..<10 where viewModel.devices.isEmpty {
+            await Task.yield()
+        }
+
+        try viewModel.openProject(at: project.path)
+        viewModel.selectDevice(testDevice.id)
+        viewModel.addLog("stale console")
+        viewModel.addLog("stale output", channel: .output)
+
+        viewModel.runApp()
+
+        XCTAssertFalse(viewModel.logLines.contains { $0.text == "stale console" })
+        viewModel.selectLogChannel(.output)
+        XCTAssertFalse(viewModel.logLines.contains { $0.text == "stale output" })
+        viewModel.selectLogChannel(.console)
+        XCTAssertEqual(viewModel.selectedLogChannel, .console)
+    }
+
     private var testDevice: Device {
         Device(
             id: "test-device",

@@ -104,6 +104,17 @@ struct RunSession: Codable, Hashable, Identifiable {
     var duration: TimeInterval { max(0, endedAt.timeIntervalSince(startedAt)) }
 }
 
+struct LiveRun: Identifiable, Equatable {
+    let id: UUID
+    let projectPath: String
+    let projectName: String
+    let deviceId: String
+    let deviceName: String
+    let configurationName: String
+    let startedAt: Date
+    var state: AppState
+}
+
 enum WorkspaceSelection: Hashable {
     case console
     case project(String)
