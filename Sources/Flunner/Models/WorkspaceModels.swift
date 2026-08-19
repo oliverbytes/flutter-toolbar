@@ -90,20 +90,6 @@ enum RunOutcome: String, Codable, CaseIterable, Hashable {
     }
 }
 
-struct RunSession: Codable, Hashable, Identifiable {
-    let id: UUID
-    let projectPath: String
-    let projectName: String
-    let deviceId: String
-    let deviceName: String
-    let configurationName: String
-    let startedAt: Date
-    let endedAt: Date
-    let outcome: RunOutcome
-
-    var duration: TimeInterval { max(0, endedAt.timeIntervalSince(startedAt)) }
-}
-
 struct LiveRun: Identifiable, Equatable {
     let id: UUID
     let projectPath: String
@@ -118,7 +104,6 @@ struct LiveRun: Identifiable, Equatable {
 enum WorkspaceSelection: Hashable {
     case console
     case project(String)
-    case session(UUID)
 }
 
 enum WorkspaceValidationError: LocalizedError, Equatable {

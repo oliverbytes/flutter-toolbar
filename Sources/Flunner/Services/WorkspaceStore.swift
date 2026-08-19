@@ -1,16 +1,14 @@
 import Foundation
 
 struct WorkspaceSnapshot: Codable, Equatable {
-    static let currentSchemaVersion = 2
+    static let currentSchemaVersion = 3
 
     var schemaVersion: Int = currentSchemaVersion
     var recentProjects: [RecentProject] = []
-    var sessions: [RunSession] = []
 }
 
 final class WorkspaceStore {
     static let recentProjectLimit = 10
-    static let sessionLimit = 30
 
     private let fileURL: URL
     private let fileManager: FileManager
@@ -60,23 +58,6 @@ final class WorkspaceStore {
             return
         }
         snapshot.recentProjects[index] = project
-        try save(snapshot)
-    }
-
-    func append(_ session: RunSession, to snapshot: inout WorkspaceSnapshot) throws {
-        snapshot.sessions.removeAll { $0.id == session.id }
-        snapshot.sessions.insert(session, at: 0)
-        snapshot.sessions = Array(snapshot.sessions.prefix(Self.sessionLimit))
-        try save(snapshot)
-    }
-
-    func removeSession(id: UUID, from snapshot: inout WorkspaceSnapshot) throws {
-        snapshot.sessions.removeAll { $0.id == id }
-        try save(snapshot)
-    }
-
-    func clearHistory(in snapshot: inout WorkspaceSnapshot) throws {
-        snapshot.sessions.removeAll()
         try save(snapshot)
     }
 

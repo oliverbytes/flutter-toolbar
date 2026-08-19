@@ -110,11 +110,11 @@ private struct WorkbenchCommands: Commands {
         CommandMenu("Project") {
             Button("Pub Get", systemImage: "shippingbox.fill", action: viewModel.pubGet)
                 .workbenchShortcut(keyboardShortcuts.binding(for: .pubGet))
-                .disabled(!viewModel.canMaintainProject)
+                .disabled(!viewModel.canPubGet)
 
             Button("Clean + Pub Get…", systemImage: "eraser.fill", action: viewModel.requestCleanAndPubGet)
                 .workbenchShortcut(keyboardShortcuts.binding(for: .cleanAndPubGet))
-                .disabled(!viewModel.canMaintainProject)
+                .disabled(!viewModel.canCleanAndPubGet)
         }
 
         CommandMenu("Run") {

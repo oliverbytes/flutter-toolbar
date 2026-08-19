@@ -46,16 +46,20 @@ struct LogEntry: Identifiable, Hashable {
 }
 
 enum ConsoleLogTools {
+    static let flutterTag = "I/flutter"
+
     static func filter(
         _ entries: [LogEntry],
         query: String,
-        enabledTypes: Set<LogEntryType>
+        enabledTypes: Set<LogEntryType>,
+        requiresFlutterTag: Bool = false
     ) -> [LogEntry] {
         let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
         // Empty selection means "no type filter" — show every type.
         let typeFilterActive = !enabledTypes.isEmpty
         return entries.filter { entry in
             if typeFilterActive, !enabledTypes.contains(entry.type) { return false }
+            if requiresFlutterTag, !entry.text.contains(flutterTag) { return false }
             return needle.isEmpty || entry.text.localizedCaseInsensitiveContains(needle)
         }
     }

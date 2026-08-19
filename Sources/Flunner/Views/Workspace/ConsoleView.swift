@@ -31,8 +31,22 @@ struct ConsoleToolbar: View {
             searchField.frame(width: 240)
 
             ForEach(LogEntryType.allCases, id: \.self) { type in
-                FilterChip(type: type, selected: viewModel.enabledLogTypes.contains(type)) {
+                FilterChip(
+                    title: type.label,
+                    systemImage: type.systemImage,
+                    selected: viewModel.enabledLogTypes.contains(type)
+                ) {
                     viewModel.toggleFilter(type)
+                }
+            }
+
+            if viewModel.selectedLogChannel == .console {
+                FilterChip(
+                    title: "Flutter",
+                    systemImage: "bird",
+                    selected: viewModel.isFlutterConsoleFilterEnabled
+                ) {
+                    viewModel.toggleFlutterConsoleFilter()
                 }
             }
 
@@ -109,6 +123,17 @@ struct ConsoleToolbar: View {
                     viewModel.toggleFilter(type)
                 } label: {
                     Label(type.label, systemImage: viewModel.enabledLogTypes.contains(type) ? "checkmark" : type.systemImage)
+                }
+            }
+            if viewModel.selectedLogChannel == .console {
+                Divider()
+                Button {
+                    viewModel.toggleFlutterConsoleFilter()
+                } label: {
+                    Label(
+                        "Flutter",
+                        systemImage: viewModel.isFlutterConsoleFilterEnabled ? "checkmark" : "bird"
+                    )
                 }
             }
         } label: {
@@ -290,13 +315,14 @@ struct ConsoleToolbar: View {
 }
 
 private struct FilterChip: View {
-    let type: LogEntryType
+    let title: String
+    let systemImage: String
     let selected: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Label(type.label, systemImage: type.systemImage)
+            Label(title, systemImage: systemImage)
                 .workbenchFont(.caption, weight: .medium)
                 .foregroundStyle(selected ? WorkbenchColor.textPrimary : WorkbenchColor.textSecondary)
                 .padding(.horizontal, WorkbenchSpacing.small)
@@ -309,6 +335,7 @@ private struct FilterChip: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(title)
         .accessibilityValue(selected ? "On" : "Off")
     }
 }

@@ -30,40 +30,19 @@ struct ContentView: View {
             WorkbenchSidebar(viewModel: viewModel)
                 .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 280)
         } detail: {
-            Group {
-                if let session = viewModel.selectedSession {
-                    SessionDetailView(session: session)
-                } else {
-                    LiveWorkspaceView(
-                        viewModel: viewModel,
-                        sourceControlViewModel: sourceControlViewModel,
-                        isSourceControlSheetPresented: $isSourceControlSheetPresented
-                    )
-                    .navigationTitle(viewModel.projectName)
-                    .navigationSubtitle(viewModel.projectPath?.abbreviatingWithTildeInPath ?? "")
-                }
-            }
+            LiveWorkspaceView(
+                viewModel: viewModel,
+                sourceControlViewModel: sourceControlViewModel,
+                isSourceControlSheetPresented: $isSourceControlSheetPresented
+            )
+            .navigationTitle(viewModel.projectName)
+            .navigationSubtitle(viewModel.projectPath?.abbreviatingWithTildeInPath ?? "")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(WorkbenchColor.background)
         }
         .navigationSplitViewStyle(.balanced)
         .tint(WorkbenchColor.accent)
         .toolbar {
-            ToolbarItem(placement: .principal) {
-                if viewModel.selectedSession != nil {
-                    Button {
-                        if let path = viewModel.projectPath {
-                            viewModel.selectWorkspace(.project(path))
-                        } else {
-                            viewModel.selectWorkspace(.console)
-                        }
-                    } label: {
-                        Label("Back to Live Workspace", systemImage: "chevron.backward")
-                    }
-                    .help("Return to the live workspace")
-                }
-            }
-
             ToolbarItemGroup(placement: .primaryAction) {
                 Button(action: viewModel.toggleTerminal) {
                     Image(systemName: isTerminalVisible ? "terminal.fill" : "terminal")

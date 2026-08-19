@@ -30,45 +30,42 @@ final class WorkspaceStoreTests: XCTestCase {
         XCTAssertEqual(snapshot.recentProjects.filter { $0.path == "/tmp/project-5" }.count, 1)
     }
 
-    func testSessionsAreCappedAndContainMetadataOnly() throws {
-        let store = WorkspaceStore(directoryURL: temporaryDirectory)
-        var snapshot = WorkspaceSnapshot()
-
-        for index in 0..<35 {
-            let session = RunSession(
-                id: UUID(),
-                projectPath: "/tmp/project-\(index)",
-                projectName: "Project \(index)",
-                deviceId: "device-\(index)",
-                deviceName: "Device \(index)",
-                configurationName: "Debug",
-                startedAt: Date(timeIntervalSince1970: TimeInterval(index)),
-                endedAt: Date(timeIntervalSince1970: TimeInterval(index + 2)),
-                outcome: .ended
-            )
-            try store.append(session, to: &snapshot)
+    func testLegacyRunHistoryIsDroppedOnLoadAndSave() throws {
+        let legacyJSON = """
+        {
+          "recentProjects" : [],
+          "schemaVersion" : 2,
+          "sessions" : [
+            {
+              "configurationName" : "Debug",
+              "deviceId" : "device",
+              "deviceName" : "Device",
+              "endedAt" : "2026-08-11T00:00:02Z",
+              "id" : "00000000-0000-0000-0000-000000000001",
+              "outcome" : "ended",
+              "projectName" : "Demo",
+              "projectPath" : "/tmp/demo",
+              "startedAt" : "2026-08-11T00:00:00Z"
+            }
+          ]
         }
+        """
+        try legacyJSON.write(
+            to: temporaryDirectory.appendingPathComponent("workspace.json"),
+            atomically: true,
+            encoding: .utf8
+        )
 
-        XCTAssertEqual(snapshot.sessions.count, WorkspaceStore.sessionLimit)
+        let store = WorkspaceStore(directoryURL: temporaryDirectory)
+        let snapshot = try store.load()
+        try store.save(snapshot)
+
         let persisted = try String(
             contentsOf: temporaryDirectory.appendingPathComponent("workspace.json"),
             encoding: .utf8
         )
-        XCTAssertFalse(persisted.contains("logLines"))
-        XCTAssertFalse(persisted.contains("console"))
-    }
-
-    func testRemovingSessionUpdatesAndPersistsHistory() throws {
-        let store = WorkspaceStore(directoryURL: temporaryDirectory)
-        let removedSession = makeSession(projectName: "Removed")
-        let retainedSession = makeSession(projectName: "Retained")
-        var snapshot = WorkspaceSnapshot(sessions: [removedSession, retainedSession])
-        try store.save(snapshot)
-
-        try store.removeSession(id: removedSession.id, from: &snapshot)
-
-        XCTAssertEqual(snapshot.sessions, [retainedSession])
-        XCTAssertEqual(try store.load().sessions, [retainedSession])
+        XCTAssertFalse(persisted.contains("sessions"))
+        XCTAssertEqual(snapshot.schemaVersion, WorkspaceSnapshot.currentSchemaVersion)
     }
 
     func testSnapshotRoundTripsAtomically() throws {
@@ -148,19 +145,5 @@ final class WorkspaceStoreTests: XCTestCase {
 
         XCTAssertEqual(snapshot.recentProjects.map(\.path), originalOrder)
         XCTAssertEqual(snapshot.recentProjects.last?.lastDeviceId, "updated-device")
-    }
-
-    private func makeSession(projectName: String) -> RunSession {
-        RunSession(
-            id: UUID(),
-            projectPath: "/tmp/\(projectName.lowercased())",
-            projectName: projectName,
-            deviceId: "device",
-            deviceName: "Device",
-            configurationName: "Debug",
-            startedAt: Date(timeIntervalSince1970: 10),
-            endedAt: Date(timeIntervalSince1970: 20),
-            outcome: .ended
-        )
     }
 }

@@ -54,24 +54,9 @@ struct WorkbenchSidebar: View {
                         .frame(minHeight: 36)
                 }
                 .buttonStyle(.plain)
-            }
 
-            Section("Run History") {
-                if viewModel.sessions.isEmpty {
-                    Text("Runs appear here after they end.")
-                        .workbenchFont(.caption)
-                        .foregroundStyle(WorkbenchColor.textSecondary)
-                        .padding(.vertical, WorkbenchSpacing.xs)
-                } else {
-                    ForEach(viewModel.sessions) { session in
-                        let isSelected = viewModel.selection == .session(session.id)
-                        SidebarSessionItem(
-                            session: session,
-                            isSelected: isSelected,
-                            onSelect: { viewModel.selectWorkspace(.session(session.id)) },
-                            onDelete: { viewModel.deleteSession(session) }
-                        )
-                    }
+                if !viewModel.liveRuns.isEmpty {
+                    sessionsSection
                 }
             }
         }
@@ -103,6 +88,53 @@ struct WorkbenchSidebar: View {
                 .stroke(WorkbenchColor.divider, lineWidth: 1)
         }
         .padding(.bottom, WorkbenchSpacing.medium)
+    }
+
+    private var sessionsSection: some View {
+        VStack(alignment: .leading, spacing: WorkbenchSpacing.small) {
+            HStack(spacing: WorkbenchSpacing.small) {
+                Rectangle()
+                    .fill(WorkbenchColor.divider)
+                    .frame(height: 1)
+                Text("Sessions")
+                    .workbenchFont(.caption, weight: .semibold)
+                    .foregroundStyle(WorkbenchColor.textSecondary)
+                    .fixedSize()
+                Rectangle()
+                    .fill(WorkbenchColor.divider)
+                    .frame(height: 1)
+            }
+            .padding(.top, WorkbenchSpacing.compact)
+            .padding(.bottom, WorkbenchSpacing.xs)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Sessions")
+
+            VStack(spacing: WorkbenchSpacing.xs) {
+                ForEach(viewModel.liveRuns) { run in
+                    let isSelected = viewModel.selectedLiveRunID == run.id
+                    Button {
+                        viewModel.selectLiveRun(run.id)
+                    } label: {
+                        SidebarSessionRow(
+                            run: run,
+                            systemImage: viewModel.devices.first(where: { $0.id == run.deviceId })?.systemImage
+                                ?? "display",
+                            showsProject: run.projectPath != viewModel.projectPath,
+                            isSelected: isSelected
+                        )
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(RoundedRectangle(cornerRadius: WorkbenchRadius.medium, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(isSelected ? .isSelected : [])
+                    .accessibilityValue(isSelected ? "Selected" : "Not selected")
+                    .help("Switch to \(run.deviceName)")
+                }
+            }
+        }
+        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: WorkbenchSpacing.small, trailing: 0))
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
     }
 }
 
@@ -157,17 +189,7 @@ private struct SidebarProjectRow: View {
 
             Spacer(minLength: WorkbenchSpacing.xs)
 
-            if runState.isRunning {
-                Circle()
-                    .fill(runState == .running ? WorkbenchColor.success : WorkbenchColor.warning)
-                    .frame(width: 7, height: 7)
-                    .accessibilityLabel(runState == .running ? "Running" : "Transitioning")
-            } else if runState == .error {
-                Circle()
-                    .fill(WorkbenchColor.error)
-                    .frame(width: 7, height: 7)
-                    .accessibilityLabel("Run failed")
-            }
+            WorkbenchRunStateDot(state: runState)
         }
         .padding(.vertical, WorkbenchSpacing.xs)
         .accessibilityElement(children: .combine)
@@ -175,76 +197,85 @@ private struct SidebarProjectRow: View {
 }
 
 private struct SidebarSessionRow: View {
-    let session: RunSession
+    let run: LiveRun
+    let systemImage: String
+    let showsProject: Bool
+    let isSelected: Bool
 
     var body: some View {
-        HStack(spacing: WorkbenchSpacing.small) {
-            Image(systemName: session.outcome.systemImage)
-                .frame(width: 18)
-                .foregroundStyle(outcomeColor)
+        HStack(spacing: WorkbenchSpacing.compact) {
+            Image(systemName: systemImage)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(isSelected ? WorkbenchColor.accent : WorkbenchColor.textSecondary)
+                .frame(width: 28, height: 28)
+                .background(
+                    isSelected ? WorkbenchColor.accentSoft : WorkbenchColor.background,
+                    in: RoundedRectangle(cornerRadius: WorkbenchRadius.small, style: .continuous)
+                )
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(session.projectName)
-                    .workbenchFont(.body)
-                    .foregroundStyle(WorkbenchColor.textPrimary)
-                    .lineLimit(1)
-                Text(session.startedAt, format: .relative(presentation: .named))
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: WorkbenchSpacing.xs) {
+                    Text(run.deviceName)
+                        .workbenchFont(.body, weight: isSelected ? .semibold : .medium)
+                        .foregroundStyle(WorkbenchColor.textPrimary)
+                        .lineLimit(1)
+
+                    WorkbenchRunStateDot(state: run.state)
+                }
+
+                Text(detail)
                     .workbenchFont(.caption)
                     .foregroundStyle(WorkbenchColor.textSecondary)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 0)
+
+            if isSelected {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(WorkbenchColor.accent)
             }
         }
-        .padding(.vertical, WorkbenchSpacing.xs)
+        .padding(.horizontal, WorkbenchSpacing.compact)
+        .padding(.vertical, WorkbenchSpacing.small)
+        .background {
+            RoundedRectangle(cornerRadius: WorkbenchRadius.medium, style: .continuous)
+                .fill(isSelected ? WorkbenchColor.accentSoft.opacity(0.55) : WorkbenchColor.surface)
+                .overlay {
+                    RoundedRectangle(cornerRadius: WorkbenchRadius.medium, style: .continuous)
+                        .stroke(
+                            isSelected ? WorkbenchColor.accent.opacity(0.45) : WorkbenchColor.divider,
+                            lineWidth: isSelected ? 1.5 : 1
+                        )
+                }
+        }
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(run.deviceName), \(detail)")
     }
 
-    private var outcomeColor: Color {
-        switch session.outcome {
-        case .ended: WorkbenchColor.success
-        case .stoppedByUser: WorkbenchColor.textSecondary
-        case .failed: WorkbenchColor.error
-        case .interrupted: WorkbenchColor.warning
+    private var detail: String {
+        if showsProject {
+            return "\(run.configurationName) · \(run.projectName)"
         }
+        return run.configurationName
     }
 }
 
-private struct SidebarSessionItem: View {
-    let session: RunSession
-    let isSelected: Bool
-    let onSelect: () -> Void
-    let onDelete: () -> Void
-
-    @State private var isHovered = false
+struct WorkbenchRunStateDot: View {
+    let state: AppState
 
     var body: some View {
-        HStack(spacing: WorkbenchSpacing.xs) {
-            Button(action: onSelect) {
-                SidebarSessionRow(session: session)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityAddTraits(isSelected ? .isSelected : [])
-            .accessibilityValue(isSelected ? "Selected" : "Not selected")
-            .help("Show run from \(session.startedAt.formatted(date: .abbreviated, time: .shortened))")
-
-            Button(role: .destructive, action: onDelete) {
-                Image(systemName: "trash")
-                    .frame(width: 22, height: 22)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.borderless)
-            .foregroundStyle(WorkbenchColor.error)
-            .opacity(isHovered ? 1 : 0)
-            .allowsHitTesting(isHovered)
-            .accessibilityHidden(!isHovered)
-            .accessibilityLabel("Delete run")
-            .workbenchTooltip("Delete run")
-        }
-        .contentShape(Rectangle())
-        .onHover { isHovered = $0 }
-        .listRowBackground(SidebarSelectionBackground(isSelected: isSelected))
-        .contextMenu {
-            Button("Delete Run", role: .destructive, action: onDelete)
+        if state.isRunning {
+            Circle()
+                .fill(state == .running ? WorkbenchColor.success : WorkbenchColor.warning)
+                .frame(width: 7, height: 7)
+                .accessibilityLabel(state == .running ? "Running" : "Transitioning")
+        } else if state == .error {
+            Circle()
+                .fill(WorkbenchColor.error)
+                .frame(width: 7, height: 7)
+                .accessibilityLabel("Run failed")
         }
     }
 }

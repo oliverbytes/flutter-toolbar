@@ -20,12 +20,14 @@ final class ProjectMaintenanceTests: XCTestCase {
 
         XCTAssertFalse(context.viewModel.isCleanConfirmationPresented)
         XCTAssertEqual(context.maintenance.operations, [.cleanAndPubGet])
-        XCTAssertFalse(context.viewModel.canMaintainProject)
+        XCTAssertFalse(context.viewModel.canPubGet)
+        XCTAssertFalse(context.viewModel.canCleanAndPubGet)
         XCTAssertFalse(context.viewModel.canRun)
 
         context.maintenance.finish(.succeeded)
 
-        XCTAssertTrue(context.viewModel.canMaintainProject)
+        XCTAssertTrue(context.viewModel.canPubGet)
+        XCTAssertTrue(context.viewModel.canCleanAndPubGet)
         XCTAssertEqual(context.viewModel.status, "Clean + Pub Get completed")
         XCTAssertTrue(context.viewModel.logLines.contains { $0.text == "Clean + Pub Get completed" })
     }
@@ -38,13 +40,38 @@ final class ProjectMaintenanceTests: XCTestCase {
             try? FileManager.default.removeItem(at: context.root)
         }
 
-        context.viewModel.selection = .session(UUID())
+        context.viewModel.selection = .console
         context.viewModel.pubGet()
 
         XCTAssertEqual(context.maintenance.operations, [.pubGet])
+        XCTAssertFalse(context.viewModel.canPubGet)
+        XCTAssertFalse(context.viewModel.canCleanAndPubGet)
         XCTAssertFalse(context.viewModel.isCleanConfirmationPresented)
         XCTAssertEqual(context.viewModel.selectedLogChannel, .output)
         XCTAssertEqual(context.viewModel.selection, .project(context.viewModel.projectPath ?? ""))
+    }
+
+    func testPubGetStaysEnabledWhileASessionIsRunning() async throws {
+        let legacyPreferences = LegacyPreferencesSnapshot()
+        let context = try await makeRunningSessionContext()
+        defer {
+            legacyPreferences.restore()
+            try? FileManager.default.removeItem(at: context.root)
+        }
+
+        XCTAssertTrue(context.viewModel.isAppRunning)
+        XCTAssertTrue(context.viewModel.canPubGet)
+        XCTAssertFalse(context.viewModel.canCleanAndPubGet)
+        XCTAssertEqual(
+            context.viewModel.cleanAndPubGetBlockReason,
+            "Stop all running sessions before cleaning."
+        )
+
+        context.viewModel.pubGet()
+
+        XCTAssertEqual(context.maintenance.operations, [.pubGet])
+        XCTAssertFalse(context.viewModel.canPubGet)
+        XCTAssertFalse(context.viewModel.canCleanAndPubGet)
     }
 
     func testMaintenanceStreamsOnlyToOutputAndLeavesItSelected() throws {
@@ -175,6 +202,56 @@ final class ProjectMaintenanceTests: XCTestCase {
         try viewModel.openProject(at: project.path)
         return (root, viewModel, maintenance)
     }
+
+    private func makeRunningSessionContext() async throws -> (
+        root: URL,
+        viewModel: WorkspaceViewModel,
+        maintenance: MockProjectMaintenance
+    ) {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("FlunnerMaintenanceRun-\(UUID().uuidString)", isDirectory: true)
+        let project = root.appendingPathComponent("Demo", isDirectory: true)
+        let dataDirectory = root.appendingPathComponent("Data", isDirectory: true)
+        try FileManager.default.createDirectory(at: project, withIntermediateDirectories: true)
+        try "name: demo\nflutter:\n".write(
+            to: project.appendingPathComponent("pubspec.yaml"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let device = Device(
+            id: "ios-device",
+            name: "iPhone",
+            platform: "ios",
+            platformType: "iphoneos",
+            category: "mobile",
+            emulator: true,
+            emulatorId: "iphone-sim",
+            ephemeral: true
+        )
+        let daemon = FlutterDaemon()
+        let maintenance = MockProjectMaintenance()
+        let viewModel = WorkspaceViewModel(
+            store: WorkspaceStore(directoryURL: dataDirectory),
+            daemon: daemon,
+            projectMaintenance: maintenance,
+            startDaemon: false,
+            restoreLastProject: false,
+            runnerFactory: { projectPath, deviceID in
+                MockMaintenanceFlutterRunner(projectPath: projectPath, deviceId: deviceID)
+            }
+        )
+        daemon.devices = [device]
+        for _ in 0..<10 where viewModel.devices.isEmpty {
+            await Task.yield()
+        }
+        XCTAssertEqual(viewModel.devices.map(\.id), [device.id])
+
+        try viewModel.openProject(at: project.path)
+        viewModel.selectDevice(device.id)
+        viewModel.runApp()
+        return (root, viewModel, maintenance)
+    }
 }
 
 @MainActor
@@ -218,5 +295,13 @@ private final class MockProjectMaintenance: FlutterProjectMaintaining {
         onOutput = nil
         self.completion = nil
         completion?(outcome)
+    }
+}
+
+@MainActor
+private final class MockMaintenanceFlutterRunner: FlutterRunner {
+    override func start(with launchConfig: LaunchConfig? = nil) {
+        appState = .running
+        status = "App running"
     }
 }

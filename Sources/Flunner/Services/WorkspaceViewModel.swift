@@ -17,7 +17,6 @@ final class WorkspaceViewModel: ObservableObject {
     @Published private(set) var status = "Preparing Flutter tools…"
     @Published private(set) var logLines: [LogEntry] = []
     @Published private(set) var recentProjects: [RecentProject] = []
-    @Published private(set) var sessions: [RunSession] = []
     @Published private(set) var liveRuns: [LiveRun] = []
     @Published private(set) var selectedLiveRunID: UUID?
     @Published private(set) var projectIcons: [String: NSImage] = [:]
@@ -31,6 +30,7 @@ final class WorkspaceViewModel: ObservableObject {
         .console: Set(LogEntryType.allCases),
         .output: Set(LogEntryType.allCases),
     ]
+    @Published private(set) var isFlutterConsoleFilterEnabled = false
     @Published var isCleanConfirmationPresented = false
     @Published var lastValidationError: WorkspaceValidationError?
     @Published private(set) var isProjectMaintenanceRunning = false
@@ -55,10 +55,12 @@ final class WorkspaceViewModel: ObservableObject {
     private var rolledOverLogKeys: Set<LogBufferKey> = []
 
     private static let unscopedLogKey = "__flugger_unscoped__"
+    private static let unscopedDeviceKey = "__flugger_unscoped_device__"
 
     private struct LogBufferKey: Hashable {
         let projectKey: String
         let channel: LogChannel
+        let deviceId: String
     }
 
     init(
@@ -78,7 +80,6 @@ final class WorkspaceViewModel: ObservableObject {
         snapshot = (try? store.load()) ?? WorkspaceSnapshot()
         terminalWorkspaces = TerminalWorkspaceManager(projects: snapshot.recentProjects)
         recentProjects = snapshot.recentProjects
-        sessions = snapshot.sessions
         preloadIcons(for: recentProjects)
 
         terminalWorkspaces.onSnapshotChange = { [weak self] projectPath, terminalSnapshot in
@@ -118,6 +119,11 @@ final class WorkspaceViewModel: ObservableObject {
         return liveRuns.first { $0.id == id }
     }
 
+    var liveRunForSelectedDevice: LiveRun? {
+        guard let projectPath, let selectedDeviceId else { return nil }
+        return liveRuns.first { $0.projectPath == projectPath && $0.deviceId == selectedDeviceId }
+    }
+
     var currentProjectLiveRuns: [LiveRun] {
         guard let projectPath else { return [] }
         return liveRuns.filter { $0.projectPath == projectPath }
@@ -140,8 +146,21 @@ final class WorkspaceViewModel: ObservableObject {
         selectedLiveRun?.state.canControl == true
     }
 
-    var canRun: Bool { projectPath != nil && selectedDeviceId != nil && !isProjectMaintenanceRunning }
-    var canMaintainProject: Bool { projectPath != nil && !isAppRunning && !isProjectMaintenanceRunning }
+    var canRun: Bool {
+        projectPath != nil
+            && selectedDeviceId != nil
+            && !isProjectMaintenanceRunning
+            && liveRunForSelectedDevice == nil
+    }
+    var canPubGet: Bool {
+        projectPath != nil && !isProjectMaintenanceRunning
+    }
+
+    var canCleanAndPubGet: Bool {
+        projectPath != nil && !isAppRunning && !isProjectMaintenanceRunning
+    }
+
+    var canMaintainProject: Bool { canCleanAndPubGet }
     var isDaemonRunning: Bool { daemon.isRunning }
     var daemonState: DaemonState { daemon.state }
     var runningEmulatorIds: Set<String> { daemon.runningEmulatorIds }
@@ -150,10 +169,15 @@ final class WorkspaceViewModel: ObservableObject {
     var runningEmulators: [Device] { emulators.filter { isEmulatorRunning($0) } }
     var hasRunningProjects: Bool { liveRuns.contains { $0.state.isRunning } }
     var isTerminalAvailable: Bool {
-        projectPath != nil && selectedSession == nil
+        projectPath != nil
     }
     var isDevToolsAvailable: Bool { debugVmServiceUri != nil }
     var isWidgetPreviewerAvailable: Bool { projectPath != nil }
+
+    func liveRun(forDeviceId deviceId: String) -> LiveRun? {
+        guard let projectPath else { return nil }
+        return liveRuns.first { $0.projectPath == projectPath && $0.deviceId == deviceId }
+    }
 
     func liveRuns(for projectPath: String) -> [LiveRun] {
         liveRuns.filter { $0.projectPath == projectPath }
@@ -169,8 +193,21 @@ final class WorkspaceViewModel: ObservableObject {
     }
 
     func selectLiveRun(_ id: UUID) {
-        guard liveRuns.contains(where: { $0.id == id }) else { return }
-        selectedLiveRunID = id
+        guard let run = liveRuns.first(where: { $0.id == id }) else { return }
+        if run.projectPath != projectPath {
+            selectWorkspace(.project(run.projectPath))
+        }
+        selectedDeviceId = run.deviceId
+        UserDefaultsStore.shared.lastDeviceId = run.deviceId
+        if let matching = launchConfigs.first(where: {
+            $0.displayName == run.configurationName || $0.name == run.configurationName
+        }) {
+            selectedLaunchConfigName = matching.name
+            UserDefaultsStore.shared.lastLaunchConfigName = matching.name
+        }
+        selectedLiveRunID = run.id
+        updateCurrentProjectPreferences()
+        refreshVisibleLogs()
         syncDerivedRunState()
     }
 
@@ -180,11 +217,6 @@ final class WorkspaceViewModel: ObservableObject {
 
     var selectedLaunchConfig: LaunchConfig? {
         launchConfigs.first { $0.name == selectedLaunchConfigName }
-    }
-
-    var selectedSession: RunSession? {
-        guard case let .session(id) = selection else { return nil }
-        return sessions.first { $0.id == id }
     }
 
     var searchText: String {
@@ -197,7 +229,12 @@ final class WorkspaceViewModel: ObservableObject {
     }
 
     var filteredLogs: [LogEntry] {
-        ConsoleLogTools.filter(logLines, query: searchText, enabledTypes: enabledLogTypes)
+        ConsoleLogTools.filter(
+            logLines,
+            query: searchText,
+            enabledTypes: enabledLogTypes,
+            requiresFlutterTag: selectedLogChannel == .console && isFlutterConsoleFilterEnabled
+        )
     }
 
     var isCurrentProjectMaintenanceRunning: Bool {
@@ -208,15 +245,24 @@ final class WorkspaceViewModel: ObservableObject {
         if projectPath == nil { return "Choose a Flutter project first." }
         if isProjectMaintenanceRunning { return "Project maintenance is in progress." }
         if selectedDeviceId == nil { return "Choose a connected device first." }
+        if liveRunForSelectedDevice != nil { return "This device already has a running session." }
         return nil
     }
 
-    var projectMaintenanceBlockReason: String? {
+    var pubGetBlockReason: String? {
         if projectPath == nil { return "Choose a Flutter project first." }
-        if isAppRunning { return "Stop the running app first." }
         if isProjectMaintenanceRunning { return "Project maintenance is already in progress." }
         return nil
     }
+
+    var cleanAndPubGetBlockReason: String? {
+        if projectPath == nil { return "Choose a Flutter project first." }
+        if isAppRunning { return "Stop all running sessions before cleaning." }
+        if isProjectMaintenanceRunning { return "Project maintenance is already in progress." }
+        return nil
+    }
+
+    var projectMaintenanceBlockReason: String? { cleanAndPubGetBlockReason }
 
     func selectWorkspace(_ newSelection: WorkspaceSelection) {
         selection = newSelection
@@ -272,12 +318,9 @@ final class WorkspaceViewModel: ObservableObject {
         let configs = parsedConfigs.isEmpty ? LaunchConfig.defaultConfigs() : parsedConfigs
         let existing = recentProjects.first { $0.path == path }
 
-        let consoleKey = LogBufferKey(projectKey: path, channel: .console)
-        let isFirstProjectLog = logsByBuffer[consoleKey]?.isEmpty ?? true
         projectPath = path
         projectName = name
         launchConfigs = configs
-        refreshVisibleLogs()
 
         let preferredConfig = existing?.lastConfigurationName ?? UserDefaultsStore.shared.lastLaunchConfigName
         selectedLaunchConfigName = preferredConfig.flatMap { preferred in
@@ -307,10 +350,14 @@ final class WorkspaceViewModel: ObservableObject {
         try persistProject(project, promote: promoteInRecents)
 
         if updateSelection { selection = .project(path) }
-        selectedLiveRunID = liveRuns(for: path).first?.id
-        syncDerivedRunState(fallbackStatus: projectStatuses[path] ?? "Ready to run \(name)")
+        bindSelectedDeviceSession(fallbackStatus: projectStatuses[path] ?? "Ready to run \(name)")
         terminalWorkspaces.activateProject(path)
-        if isFirstProjectLog {
+        let consoleKey = LogBufferKey(
+            projectKey: path,
+            channel: .console,
+            deviceId: activeDeviceLogKey
+        )
+        if logsByBuffer[consoleKey]?.isEmpty ?? true {
             addLog("Project: \(name)", type: .command, projectPath: path)
         }
 
@@ -325,6 +372,7 @@ final class WorkspaceViewModel: ObservableObject {
         selectedDeviceId = id
         UserDefaultsStore.shared.lastDeviceId = id
         updateCurrentProjectPreferences()
+        bindSelectedDeviceSession()
     }
 
     func selectConfiguration(_ name: String?) {
@@ -371,16 +419,17 @@ final class WorkspaceViewModel: ObservableObject {
     func runApp() {
         guard canRun, let projectPath, let device = selectedDevice else { return }
 
-        clearProjectLogs(for: projectPath)
+        clearDeviceLogs(for: projectPath, deviceId: device.id)
         showLiveLogs(.console, for: projectPath)
 
         let configName = selectedLaunchConfig?.displayName ?? "Debug"
         let runID = UUID()
+        let deviceId = device.id
         let liveRun = LiveRun(
             id: runID,
             projectPath: projectPath,
             projectName: projectName,
-            deviceId: device.id,
+            deviceId: deviceId,
             deviceName: device.displayName,
             configurationName: configName,
             startedAt: .now,
@@ -389,9 +438,9 @@ final class WorkspaceViewModel: ObservableObject {
         liveRuns.append(liveRun)
         selectedLiveRunID = runID
 
-        let newRunner = runnerFactory(projectPath, device.id)
+        let newRunner = runnerFactory(projectPath, deviceId)
         newRunner.onLogOutput = { [weak self] message, type in
-            self?.addLog(message, type: type, projectPath: projectPath)
+            self?.addLog(message, type: type, projectPath: projectPath, deviceId: deviceId)
         }
         newRunner.onCompletion = { [weak self] outcome in
             self?.finalizeLiveRun(id: runID, outcome: outcome)
@@ -428,13 +477,13 @@ final class WorkspaceViewModel: ObservableObject {
     }
 
     func stopApp() {
-        guard let run = selectedLiveRun ?? currentProjectLiveRuns.first,
+        guard let run = selectedLiveRun,
               let runner = runnersByRunID[run.id] else { return }
         runner.stop()
     }
 
     func hotReload() {
-        guard let run = selectedLiveRun ?? currentProjectLiveRuns.first,
+        guard let run = selectedLiveRun,
               let projectPath,
               let runner = runnersByRunID[run.id] else { return }
         showLiveLogs(.console, for: projectPath)
@@ -442,15 +491,16 @@ final class WorkspaceViewModel: ObservableObject {
     }
 
     func hotRestart() {
-        guard let run = selectedLiveRun ?? currentProjectLiveRuns.first,
+        guard let run = selectedLiveRun,
               let projectPath,
               let runner = runnersByRunID[run.id] else { return }
+        clearDeviceLogs(for: projectPath, deviceId: run.deviceId)
         showLiveLogs(.console, for: projectPath)
         runner.hotRestart()
     }
 
     func requestCleanAndPubGet() {
-        guard canMaintainProject else { return }
+        guard canCleanAndPubGet else { return }
         isCleanConfirmationPresented = true
     }
 
@@ -490,6 +540,10 @@ final class WorkspaceViewModel: ObservableObject {
             enabledTypes.insert(type)
         }
         enabledLogTypesByChannel[selectedLogChannel] = enabledTypes
+    }
+
+    func toggleFlutterConsoleFilter() {
+        isFlutterConsoleFilterEnabled.toggle()
     }
 
     func copyVisibleLogs() {
@@ -615,28 +669,6 @@ final class WorkspaceViewModel: ObservableObject {
         daemon.restart()
     }
 
-    func clearHistory() {
-        do {
-            try store.clearHistory(in: &snapshot)
-            sessions = []
-            if case .session = selection { selection = .console }
-            status = "Run history cleared"
-        } catch {
-            status = "Could not clear history: \(error.localizedDescription)"
-        }
-    }
-
-    func deleteSession(_ session: RunSession) {
-        do {
-            try store.removeSession(id: session.id, from: &snapshot)
-            sessions = snapshot.sessions
-            if selection == .session(session.id) { selection = .console }
-            status = "Run deleted"
-        } catch {
-            status = "Could not delete run: \(error.localizedDescription)"
-        }
-    }
-
     static func validateProject(at path: String, fileManager: FileManager = .default) throws {
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue else {
@@ -664,11 +696,13 @@ final class WorkspaceViewModel: ObservableObject {
                 if let selectedDeviceId = self.selectedDeviceId,
                    !devices.contains(where: { $0.id == selectedDeviceId }) {
                     self.selectedDeviceId = nil
+                    self.bindSelectedDeviceSession()
                     self.status = "The selected device disconnected."
                 } else if self.selectedDeviceId == nil,
                           let saved = UserDefaultsStore.shared.lastDeviceId,
                           devices.contains(where: { $0.id == saved }) {
                     self.selectedDeviceId = saved
+                    self.bindSelectedDeviceSession()
                 }
             }
             .store(in: &daemonCancellables)
@@ -744,9 +778,8 @@ final class WorkspaceViewModel: ObservableObject {
         try? persistProject(project, promote: false)
     }
 
-    private func finalizeLiveRun(id: UUID, outcome: RunOutcome) {
+    private func finalizeLiveRun(id: UUID, outcome _: RunOutcome) {
         guard let index = liveRuns.firstIndex(where: { $0.id == id }) else { return }
-        let run = liveRuns[index]
         liveRuns.remove(at: index)
         runnersByRunID[id] = nil
         runnerCancellablesByRunID[id] = nil
@@ -754,30 +787,7 @@ final class WorkspaceViewModel: ObservableObject {
         debugURIsByRunID[id] = nil
 
         if selectedLiveRunID == id {
-            selectedLiveRunID = currentProjectLiveRuns.first?.id
-        }
-
-        let session = RunSession(
-            id: run.id,
-            projectPath: run.projectPath,
-            projectName: run.projectName,
-            deviceId: run.deviceId,
-            deviceName: run.deviceName,
-            configurationName: run.configurationName,
-            startedAt: run.startedAt,
-            endedAt: .now,
-            outcome: outcome
-        )
-
-        do {
-            try store.append(session, to: &snapshot)
-            sessions = snapshot.sessions
-        } catch {
-            addLog(
-                "Could not save run history: \(error.localizedDescription)",
-                type: .error,
-                projectPath: run.projectPath
-            )
+            selectedLiveRunID = nil
         }
 
         syncDerivedRunState()
@@ -816,8 +826,10 @@ final class WorkspaceViewModel: ObservableObject {
     }
 
     private func performProjectMaintenance(_ operation: FlutterProjectMaintenanceOperation) {
-        guard let projectPath, canMaintainProject else {
-            if let projectMaintenanceBlockReason { status = projectMaintenanceBlockReason }
+        let canPerform = operation == .pubGet ? canPubGet : canCleanAndPubGet
+        guard let projectPath, canPerform else {
+            let reason = operation == .pubGet ? pubGetBlockReason : cleanAndPubGetBlockReason
+            if let reason { status = reason }
             return
         }
 
@@ -826,17 +838,25 @@ final class WorkspaceViewModel: ObservableObject {
         activeMaintenanceProjectPath = projectPath
         updateStatus("Running \(operation.displayName)…", for: projectPath)
         let startedAt = Date.now.formatted(date: .abbreviated, time: .standard)
+        let maintenanceDeviceId = selectedDeviceId ?? Self.unscopedDeviceKey
         addLog(
             "\(operation.displayName) — \(projectName) — \(startedAt)",
             type: .command,
             projectPath: projectPath,
-            channel: .output
+            channel: .output,
+            deviceId: maintenanceDeviceId
         )
         let started = projectMaintenance.run(
             operation,
             projectPath: projectPath,
             onOutput: { [weak self] message, type in
-                self?.addLog(message, type: type, projectPath: projectPath, channel: .output)
+                self?.addLog(
+                    message,
+                    type: type,
+                    projectPath: projectPath,
+                    channel: .output,
+                    deviceId: maintenanceDeviceId
+                )
             },
             completion: { [weak self] outcome in
                 guard let self else { return }
@@ -849,7 +869,8 @@ final class WorkspaceViewModel: ObservableObject {
                         "\(operation.displayName) completed",
                         type: .info,
                         projectPath: projectPath,
-                        channel: .output
+                        channel: .output,
+                        deviceId: maintenanceDeviceId
                     )
                 case let .failed(command, exitCode):
                     self.updateStatus("\(operation.displayName) failed", for: projectPath)
@@ -857,11 +878,18 @@ final class WorkspaceViewModel: ObservableObject {
                         "\(command) exited with code \(exitCode)",
                         type: .error,
                         projectPath: projectPath,
-                        channel: .output
+                        channel: .output,
+                        deviceId: maintenanceDeviceId
                     )
                 case let .launchFailed(message):
                     self.updateStatus("Could not start \(operation.displayName)", for: projectPath)
-                    self.addLog(message, type: .error, projectPath: projectPath, channel: .output)
+                    self.addLog(
+                        message,
+                        type: .error,
+                        projectPath: projectPath,
+                        channel: .output,
+                        deviceId: maintenanceDeviceId
+                    )
                 }
             }
         )
@@ -874,7 +902,8 @@ final class WorkspaceViewModel: ObservableObject {
                 "Project maintenance is already in progress.",
                 type: .error,
                 projectPath: projectPath,
-                channel: .output
+                channel: .output,
+                deviceId: maintenanceDeviceId
             )
         }
     }
@@ -886,14 +915,20 @@ final class WorkspaceViewModel: ObservableObject {
         }
     }
 
+    private func bindSelectedDeviceSession(fallbackStatus: String? = nil) {
+        selectedLiveRunID = liveRunForSelectedDevice?.id
+        refreshVisibleLogs()
+        syncDerivedRunState(fallbackStatus: fallbackStatus)
+    }
+
     private func showLiveLogs(_ channel: LogChannel, for projectPath: String) {
         selection = .project(projectPath)
         selectLogChannel(channel)
     }
 
-    private func clearProjectLogs(for projectPath: String) {
+    private func clearDeviceLogs(for projectPath: String, deviceId: String) {
         for channel in LogChannel.allCases {
-            let key = LogBufferKey(projectKey: projectPath, channel: channel)
+            let key = LogBufferKey(projectKey: projectPath, channel: channel, deviceId: deviceId)
             logsByBuffer[key] = []
             rolledOverLogKeys.remove(key)
         }
@@ -904,11 +939,13 @@ final class WorkspaceViewModel: ObservableObject {
         _ message: String,
         type: LogEntryType = .info,
         projectPath targetProjectPath: String? = nil,
-        channel: LogChannel = .console
+        channel: LogChannel = .console,
+        deviceId: String? = nil
     ) {
         let key = LogBufferKey(
             projectKey: targetProjectPath ?? activeProjectLogKey,
-            channel: channel
+            channel: channel,
+            deviceId: deviceId ?? activeDeviceLogKey
         )
         var entries = logsByBuffer[key] ?? []
 
@@ -931,8 +968,16 @@ final class WorkspaceViewModel: ObservableObject {
         projectPath ?? Self.unscopedLogKey
     }
 
+    private var activeDeviceLogKey: String {
+        selectedDeviceId ?? Self.unscopedDeviceKey
+    }
+
     private var activeLogBufferKey: LogBufferKey {
-        LogBufferKey(projectKey: activeProjectLogKey, channel: selectedLogChannel)
+        LogBufferKey(
+            projectKey: activeProjectLogKey,
+            channel: selectedLogChannel,
+            deviceId: activeDeviceLogKey
+        )
     }
 
     private func refreshVisibleLogs() {

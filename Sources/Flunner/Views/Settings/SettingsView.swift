@@ -97,15 +97,6 @@ struct SettingsView: View {
                     Button("Clear Recent Projects", role: .destructive, action: viewModel.clearRecentProjects)
                         .disabled(viewModel.recentProjects.isEmpty || viewModel.hasRunningProjects)
                 }
-
-                Section("Run History") {
-                    LabeledContent("Stored", value: "\(viewModel.sessions.count) of \(WorkspaceStore.sessionLimit)")
-                    Text("Only project, device, configuration, timing, and outcome metadata is saved. Console and Output text is never stored.")
-                        .workbenchFont(.caption)
-                        .foregroundStyle(WorkbenchColor.textSecondary)
-                    Button("Clear Run History", role: .destructive, action: viewModel.clearHistory)
-                        .disabled(viewModel.sessions.isEmpty)
-                }
             }
             .formStyle(.grouped)
             .tabItem { Label("Data", systemImage: "internaldrive") }

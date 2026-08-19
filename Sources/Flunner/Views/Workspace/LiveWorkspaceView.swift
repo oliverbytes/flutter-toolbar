@@ -89,7 +89,6 @@ private struct SetupBar: View {
         HStack(spacing: WorkbenchSpacing.compact) {
             deviceMenu
             configurationMenu
-            liveSessionMenu
             Spacer(minLength: WorkbenchSpacing.small)
             RunControlCluster(viewModel: viewModel)
         }
@@ -105,7 +104,8 @@ private struct SetupBar: View {
             title: "Device",
             value: title,
             systemImage: viewModel.selectedDevice?.systemImage ?? "display",
-            maxWidth: 200
+            maxWidth: 200,
+            runState: viewModel.liveRunForSelectedDevice?.state
         ) {
             deviceMenuContent
         }
@@ -120,12 +120,19 @@ private struct SetupBar: View {
             Button {
                 viewModel.selectDevice(device.id)
             } label: {
-                if viewModel.selectedDevice?.id == device.id {
-                    Label(device.displayName, systemImage: "checkmark")
-                } else {
-                    Label(device.displayName, systemImage: device.systemImage)
+                HStack {
+                    if viewModel.selectedDevice?.id == device.id {
+                        Label(device.displayName, systemImage: "checkmark")
+                    } else {
+                        Label(device.displayName, systemImage: device.systemImage)
+                    }
+                    if let run = viewModel.liveRun(forDeviceId: device.id) {
+                        Spacer(minLength: WorkbenchSpacing.small)
+                        WorkbenchRunStateDot(state: run.state)
+                    }
                 }
             }
+            .accessibilityValue(viewModel.liveRun(forDeviceId: device.id)?.state.isRunning == true ? "Running" : "")
         }
         Divider()
         if !viewModel.runningEmulators.isEmpty {
@@ -191,32 +198,6 @@ private struct SetupBar: View {
         }
         .disabled(viewModel.projectPath == nil)
     }
-
-    @ViewBuilder
-    private var liveSessionMenu: some View {
-        let runs = viewModel.currentProjectLiveRuns
-        if !runs.isEmpty {
-            let title = viewModel.selectedLiveRun.map(liveRunTitle) ?? "Choose Session"
-            WorkbenchMenu(title: "Session", value: title, systemImage: "dot.radiowaves.left.and.right") {
-                ForEach(runs) { run in
-                    Button {
-                        viewModel.selectLiveRun(run.id)
-                    } label: {
-                        if viewModel.selectedLiveRun?.id == run.id {
-                            Label(liveRunTitle(run), systemImage: "checkmark")
-                        } else {
-                            Text(liveRunTitle(run))
-                        }
-                    }
-                }
-            }
-            .accessibilityLabel("Running Sessions")
-        }
-    }
-
-    private func liveRunTitle(_ run: LiveRun) -> String {
-        "\(run.deviceName) · \(run.configurationName)"
-    }
 }
 
 private struct WorkbenchMenu<Content: View>: View {
@@ -224,6 +205,7 @@ private struct WorkbenchMenu<Content: View>: View {
     let value: String
     let systemImage: String
     var maxWidth: CGFloat = 240
+    var runState: AppState?
     @ViewBuilder let content: Content
 
     init(
@@ -231,12 +213,14 @@ private struct WorkbenchMenu<Content: View>: View {
         value: String,
         systemImage: String,
         maxWidth: CGFloat = 240,
+        runState: AppState? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
         self.value = value
         self.systemImage = systemImage
         self.maxWidth = maxWidth
+        self.runState = runState
         self.content = content()
     }
 
@@ -253,6 +237,9 @@ private struct WorkbenchMenu<Content: View>: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                if let runState {
+                    WorkbenchRunStateDot(state: runState)
+                }
                 Image(systemName: "chevron.down")
                     .workbenchFont(.caption)
                     .foregroundStyle(WorkbenchColor.textSecondary.opacity(0.7))
@@ -265,6 +252,7 @@ private struct WorkbenchMenu<Content: View>: View {
         .frame(maxWidth: maxWidth, alignment: .leading)
         .help("\(title): \(value)")
         .accessibilityLabel("\(title): \(value)")
+        .accessibilityValue(runState?.isRunning == true ? "Running" : "")
     }
 }
 
@@ -278,16 +266,16 @@ private struct RunControlCluster: View {
                 Label("Clean + Pub Get", systemImage: "eraser.fill").labelStyle(.iconOnly)
             }
             .buttonStyle(WorkbenchIconButtonStyle(color: WorkbenchColor.textSecondary))
-            .disabled(!viewModel.canMaintainProject)
-            .workbenchTooltip(viewModel.projectMaintenanceBlockReason ?? actionHelp("Clean + Pub Get", action: .cleanAndPubGet))
+            .disabled(!viewModel.canCleanAndPubGet)
+            .workbenchTooltip(viewModel.cleanAndPubGetBlockReason ?? actionHelp("Clean + Pub Get", action: .cleanAndPubGet))
             .accessibilityLabel("Clean and Pub Get")
 
             Button(action: viewModel.pubGet) {
                 Label("Pub Get", systemImage: "shippingbox.fill").labelStyle(.iconOnly)
             }
             .buttonStyle(WorkbenchIconButtonStyle(color: WorkbenchColor.textSecondary))
-            .disabled(!viewModel.canMaintainProject)
-            .workbenchTooltip(viewModel.projectMaintenanceBlockReason ?? actionHelp("Pub Get", action: .pubGet))
+            .disabled(!viewModel.canPubGet)
+            .workbenchTooltip(viewModel.pubGetBlockReason ?? actionHelp("Pub Get", action: .pubGet))
             .accessibilityLabel("Pub Get")
 
             Divider()
@@ -310,7 +298,7 @@ private struct RunControlCluster: View {
             .workbenchTooltip(actionHelp("Hot Restart", action: .hotRestart))
             .accessibilityLabel("Hot Restart")
 
-            if !viewModel.currentProjectLiveRuns.isEmpty {
+            if viewModel.selectedLiveRun != nil {
                 Button(action: viewModel.stopApp) {
                     Label(viewModel.selectedLiveRun?.state == .stopping ? "Stopping…" : "Stop", systemImage: "stop.fill")
                         .labelStyle(.iconOnly)
