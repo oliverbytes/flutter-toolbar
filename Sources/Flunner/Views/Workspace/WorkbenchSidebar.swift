@@ -54,9 +54,30 @@ struct WorkbenchSidebar: View {
                         .frame(minHeight: 36)
                 }
                 .buttonStyle(.plain)
+            }
 
-                if !viewModel.liveRuns.isEmpty {
-                    sessionsSection
+            if !viewModel.liveRuns.isEmpty {
+                Section("Sessions") {
+                    ForEach(viewModel.liveRuns) { run in
+                        let isSelected = viewModel.selectedLiveRunID == run.id
+                        Button {
+                            viewModel.selectLiveRun(run.id)
+                        } label: {
+                            SidebarSessionRow(
+                                run: run,
+                                systemImage: viewModel.devices.first(where: { $0.id == run.deviceId })?.systemImage
+                                    ?? "display",
+                                showsProject: run.projectPath != viewModel.projectPath
+                            )
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(SidebarSelectionBackground(isSelected: isSelected))
+                        .accessibilityAddTraits(isSelected ? .isSelected : [])
+                        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+                        .help("Switch to \(run.deviceName)")
+                    }
                 }
             }
         }
@@ -88,53 +109,6 @@ struct WorkbenchSidebar: View {
                 .stroke(WorkbenchColor.divider, lineWidth: 1)
         }
         .padding(.bottom, WorkbenchSpacing.medium)
-    }
-
-    private var sessionsSection: some View {
-        VStack(alignment: .leading, spacing: WorkbenchSpacing.small) {
-            HStack(spacing: WorkbenchSpacing.small) {
-                Rectangle()
-                    .fill(WorkbenchColor.divider)
-                    .frame(height: 1)
-                Text("Sessions")
-                    .workbenchFont(.caption, weight: .semibold)
-                    .foregroundStyle(WorkbenchColor.textSecondary)
-                    .fixedSize()
-                Rectangle()
-                    .fill(WorkbenchColor.divider)
-                    .frame(height: 1)
-            }
-            .padding(.top, WorkbenchSpacing.compact)
-            .padding(.bottom, WorkbenchSpacing.xs)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("Sessions")
-
-            VStack(spacing: WorkbenchSpacing.xs) {
-                ForEach(viewModel.liveRuns) { run in
-                    let isSelected = viewModel.selectedLiveRunID == run.id
-                    Button {
-                        viewModel.selectLiveRun(run.id)
-                    } label: {
-                        SidebarSessionRow(
-                            run: run,
-                            systemImage: viewModel.devices.first(where: { $0.id == run.deviceId })?.systemImage
-                                ?? "display",
-                            showsProject: run.projectPath != viewModel.projectPath,
-                            isSelected: isSelected
-                        )
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(RoundedRectangle(cornerRadius: WorkbenchRadius.medium, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(isSelected ? .isSelected : [])
-                    .accessibilityValue(isSelected ? "Selected" : "Not selected")
-                    .help("Switch to \(run.deviceName)")
-                }
-            }
-        }
-        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: WorkbenchSpacing.small, trailing: 0))
-        .listRowBackground(Color.clear)
-        .listRowSeparator(.hidden)
     }
 }
 
@@ -200,56 +174,29 @@ private struct SidebarSessionRow: View {
     let run: LiveRun
     let systemImage: String
     let showsProject: Bool
-    let isSelected: Bool
 
     var body: some View {
-        HStack(spacing: WorkbenchSpacing.compact) {
+        HStack(spacing: WorkbenchSpacing.small) {
             Image(systemName: systemImage)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(isSelected ? WorkbenchColor.accent : WorkbenchColor.textSecondary)
-                .frame(width: 28, height: 28)
-                .background(
-                    isSelected ? WorkbenchColor.accentSoft : WorkbenchColor.background,
-                    in: RoundedRectangle(cornerRadius: WorkbenchRadius.small, style: .continuous)
-                )
+                .foregroundStyle(WorkbenchColor.textSecondary)
+                .frame(width: 18, height: 18)
 
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: WorkbenchSpacing.xs) {
-                    Text(run.deviceName)
-                        .workbenchFont(.body, weight: isSelected ? .semibold : .medium)
-                        .foregroundStyle(WorkbenchColor.textPrimary)
-                        .lineLimit(1)
-
-                    WorkbenchRunStateDot(state: run.state)
-                }
-
+            VStack(alignment: .leading, spacing: 2) {
+                Text(run.deviceName)
+                    .workbenchFont(.body, weight: .regular)
+                    .foregroundStyle(WorkbenchColor.textPrimary)
+                    .lineLimit(1)
                 Text(detail)
                     .workbenchFont(.caption)
                     .foregroundStyle(WorkbenchColor.textSecondary)
                     .lineLimit(1)
             }
 
-            Spacer(minLength: 0)
+            Spacer(minLength: WorkbenchSpacing.xs)
 
-            if isSelected {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(WorkbenchColor.accent)
-            }
+            WorkbenchRunStateDot(state: run.state)
         }
-        .padding(.horizontal, WorkbenchSpacing.compact)
-        .padding(.vertical, WorkbenchSpacing.small)
-        .background {
-            RoundedRectangle(cornerRadius: WorkbenchRadius.medium, style: .continuous)
-                .fill(isSelected ? WorkbenchColor.accentSoft.opacity(0.55) : WorkbenchColor.surface)
-                .overlay {
-                    RoundedRectangle(cornerRadius: WorkbenchRadius.medium, style: .continuous)
-                        .stroke(
-                            isSelected ? WorkbenchColor.accent.opacity(0.45) : WorkbenchColor.divider,
-                            lineWidth: isSelected ? 1.5 : 1
-                        )
-                }
-        }
+        .padding(.vertical, WorkbenchSpacing.xs)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(run.deviceName), \(detail)")
     }
