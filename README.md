@@ -45,6 +45,31 @@ Whether you're developing solo or pairing with AI coding agents, Flunner gives y
 
 ## 🚀 Quick Start
 
+### Download DMG Installer (Recommended)
+
+1. Download the latest **`Flunner.dmg`** from [GitHub Releases](https://github.com/stackwares/flunner/releases/latest).
+2. Open the disk image and drag **Flunner** to your **Applications** folder.
+3. Launch Flunner from Applications or Spotlight.
+
+> **Tip:** If macOS Gatekeeper alerts you when launching an ad-hoc signed build for the first time, right-click (or Control-click) `Flunner.app` in `/Applications` and click **Open**.
+
+---
+
+### Install via Homebrew
+
+Install the macOS app via Homebrew Cask:
+
+```bash
+brew install --cask stackwares/tap/flunner
+```
+
+To upgrade later:
+```bash
+brew upgrade --cask flunner
+```
+
+---
+
 ### Building & Running from Source
 
 Clone the repository and run the convenience script:
@@ -56,6 +81,9 @@ cd flunner
 
 # Build and launch in Debug mode
 ./script/build_and_run.sh
+
+# Package a Release DMG installer (.dmg & .zip in dist/)
+./script/build_dmg.sh
 ```
 
 ### Using Swift Package Manager / Xcode

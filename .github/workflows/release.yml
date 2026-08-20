@@ -1,0 +1,145 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.0.0 or v1.0.0)'
+        required: false
+        type: string
+      draft:
+        description: 'Create release as draft'
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Create release as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Publish Release
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode Version
+        run: sudo xcode-select -s /Applications/Xcode_16.0.app || sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show Environment Info
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Run Test Suite
+        run: swift test -v --parallel
+
+      - name: Determine Version
+        id: get_version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            INPUT_VER="${{ github.event.inputs.version }}"
+            VERSION="${INPUT_VER#v}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#v}"
+          else
+            VERSION=$(grep 'MARKETING_VERSION:' project.yml | head -n 1 | awk '{print $2}' | tr -d '"' || echo "1.0.0")
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building Flunner version: $VERSION"
+
+      - name: Set Up Keychain & Code Signing (Optional)
+        id: setup_signing
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          if [ -n "$APPLE_CERTIFICATE_BASE64" ] && [ -n "$APPLE_CERTIFICATE_PASSWORD" ]; then
+            echo "==> Configuring Apple Developer signing certificate..."
+            KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
+            KEYCHAIN_PWD="${KEYCHAIN_PASSWORD:-temporary_runner_keychain_pwd}"
+            
+            # Create temporary keychain
+            security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+            security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+            security unlock-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+            
+            # Import certificate to keychain
+            CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
+            echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERTIFICATE_PATH"
+            security import "$CERTIFICATE_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+            security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+            
+            # Apply keychain to list
+            security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+            
+            echo "SIGNING_IDENTITY=${APPLE_SIGNING_IDENTITY:-"Developer ID Application"}" >> "$GITHUB_ENV"
+          else
+            echo "==> No Apple Certificate secrets found. Building with ad-hoc signature (-)."
+            echo "SIGNING_IDENTITY=-" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build and Package .DMG Installer
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ env.SIGNING_IDENTITY }}
+          NOTARIZATION_APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
+          NOTARIZATION_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
+          NOTARIZATION_TEAM_ID: ${{ secrets.NOTARIZATION_TEAM_ID }}
+        run: |
+          ./script/build_dmg.sh --version "${{ steps.get_version.outputs.VERSION }}"
+
+      - name: Generate Release Notes & Checksums Summary
+        id: release_notes
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          {
+            echo "### Flunner v${VERSION} for macOS"
+            echo ""
+            echo "#### 📦 Installation"
+            echo "1. Download **\`Flunner-${VERSION}.dmg\`** (or **\`Flunner.dmg\`**)."
+            echo "2. Open the disk image and drag **Flunner** to your **Applications** folder."
+            echo "3. Launch Flunner from Applications or Spotlight."
+            echo ""
+            echo "> **Note for macOS Gatekeeper:** If prompted when opening for the first time, right-click (or Control-click) \`Flunner.app\` in your Applications folder and select **Open**."
+            echo ""
+            echo "#### 🔒 SHA256 Checksums"
+            echo "\`\`\`"
+            cat dist/Flunner-${VERSION}.dmg.sha256 || cat dist/Flunner.dmg.sha256
+            cat dist/Flunner-${VERSION}.zip.sha256 || cat dist/Flunner.zip.sha256
+            echo "\`\`\`"
+          } > "$RUNNER_TEMP/release_notes.md"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Flunner v${{ steps.get_version.outputs.VERSION }}
+          tag_name: ${{ github.ref_name != '' && startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', steps.get_version.outputs.VERSION) }}
+          body_path: ${{ runner.temp }}/release_notes.md
+          draft: ${{ github.event.inputs.draft || false }}
+          prerelease: ${{ github.event.inputs.prerelease || false }}
+          generate_release_notes: true
+          files: |
+            dist/Flunner.dmg
+            dist/Flunner-*.dmg
+            dist/Flunner.zip
+            dist/Flunner-*.zip
+            dist/*.sha256
