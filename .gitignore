@@ -1,11 +1,47 @@
 # macOS Finder metadata
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
 
-# Swift Package Manager build output
+# Swift Package Manager & Build output
 /.build/
+/Build/
+/DerivedData/
 
 # Xcode and SwiftPM-generated user/workspace state
-DerivedData/
 xcuserdata/
+*.xcuserdatad/
 *.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
 /.swiftpm/xcode/
+
+# AI Agent & IDE configs
+.claude/
+.commandcode/
+.cursor/
+.codex/
+.gemini/
+.codeium/
+.vscode/
+.idea/
+
+# Environment, Certificates & Secrets
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.cer
+*.p12
+*.mobileprovision
+*.provisionprofile
+
+# Crash logs & Build products
+*.crash
+*.dSYM/
+*.ipa
+*.app
