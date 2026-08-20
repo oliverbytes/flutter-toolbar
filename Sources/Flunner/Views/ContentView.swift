@@ -89,7 +89,11 @@ struct ContentView: View {
         .onAppear {
             sourceControlViewModel.setProjectPath(viewModel.projectPath)
             if !hasCompletedOnboarding {
-                showOnboarding = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    if !hasCompletedOnboarding {
+                        showOnboarding = true
+                    }
+                }
             }
         }
         .sheet(isPresented: $showOnboarding) {
@@ -101,6 +105,9 @@ struct ContentView: View {
         }
         .onChange(of: viewModel.projectPath) { _, path in
             sourceControlViewModel.setProjectPath(path)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showOnboardingSheet)) { _ in
+            showOnboarding = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .showSourceControlSheet)) { _ in
             isSourceControlSheetPresented = true

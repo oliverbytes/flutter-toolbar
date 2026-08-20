@@ -73,6 +73,21 @@ struct FlunnerApp: App {
                 keyboardShortcuts: keyboardShortcuts,
                 appFontSize: $appFontSize
             )
+            CommandGroup(replacing: .help) {
+                Button("Welcome to Flunner (Onboarding)…") {
+                    NotificationCenter.default.post(name: .showOnboardingSheet, object: nil)
+                }
+                Divider()
+                Button("Flunner GitHub Repository") {
+                    viewModel.openLink(URL(string: "https://github.com/stackwares/flunner")!)
+                }
+                Button("Flutter Documentation") {
+                    viewModel.openLink(URL(string: "https://docs.flutter.dev")!)
+                }
+                Button("Report an Issue…") {
+                    viewModel.openLink(URL(string: "https://github.com/stackwares/flunner/issues")!)
+                }
+            }
         }
 
         Settings {

@@ -4,6 +4,7 @@ import SwiftUI
 extension Notification.Name {
     static let focusConsoleSearch = Notification.Name("focusConsoleSearch")
     static let showFlutterSDKInfo = Notification.Name("showFlutterSDKInfo")
+    static let showOnboardingSheet = Notification.Name("showOnboardingSheet")
 }
 
 struct ConsoleToolbar: View {
