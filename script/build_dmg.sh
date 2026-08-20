@@ -219,7 +219,8 @@ echo "==> Creating .zip archive..."
 if [ -n "$NOTARY_PROFILE" ]; then
   echo "==> Submitting DMG for Apple Notarization via keychain profile '$NOTARY_PROFILE'..."
   xcrun notarytool submit "$VERSIONED_DMG" --keychain-profile "$NOTARY_PROFILE" --wait
-  echo "==> Stapling notarization ticket to DMG..."
+  echo "==> Stapling notarization ticket..."
+  xcrun stapler staple "$APP_BUNDLE" || true
   xcrun stapler staple "$VERSIONED_DMG"
 elif [ -n "${NOTARIZATION_KEY_FILE:-}" ] && [ -n "${NOTARIZATION_KEY_ID:-}" ] && [ -n "${NOTARIZATION_ISSUER_ID:-}" ]; then
   echo "==> Submitting DMG for Apple Notarization via App Store Connect API Key..."
@@ -228,7 +229,8 @@ elif [ -n "${NOTARIZATION_KEY_FILE:-}" ] && [ -n "${NOTARIZATION_KEY_ID:-}" ] &&
     --key-id "$NOTARIZATION_KEY_ID" \
     --issuer "$NOTARIZATION_ISSUER_ID" \
     --wait
-  echo "==> Stapling notarization ticket to DMG..."
+  echo "==> Stapling notarization ticket..."
+  xcrun stapler staple "$APP_BUNDLE" || true
   xcrun stapler staple "$VERSIONED_DMG"
 elif [ -n "${NOTARIZATION_APPLE_ID:-}" ] && [ -n "${NOTARIZATION_PASSWORD:-}" ] && [ -n "${NOTARIZATION_TEAM_ID:-}" ]; then
   echo "==> Submitting DMG for Apple Notarization via Apple ID credentials..."
@@ -237,7 +239,8 @@ elif [ -n "${NOTARIZATION_APPLE_ID:-}" ] && [ -n "${NOTARIZATION_PASSWORD:-}" ] 
     --password "$NOTARIZATION_PASSWORD" \
     --team-id "$NOTARIZATION_TEAM_ID" \
     --wait
-  echo "==> Stapling notarization ticket to DMG..."
+  echo "==> Stapling notarization ticket..."
+  xcrun stapler staple "$APP_BUNDLE" || true
   xcrun stapler staple "$VERSIONED_DMG"
 else
   echo "==> Skipping Apple Notarization (no active notary profile or credentials provided)."
