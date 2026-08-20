@@ -1,0 +1,51 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior in Flunner.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please provide as much detail as possible to help us reproduce and fix the issue quickly.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: A clear and concise description of what the bug is.
+      placeholder: e.g. Hot reload fails to trigger after switching target device
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to reproduce the behavior.
+      placeholder: |
+        1. Open project 'xyz'
+        2. Run on iPhone Simulator
+        3. Press 'r' to reload
+        4. See error in console
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment & Versions
+      description: Please share your environment details.
+      value: |
+        - **macOS Version:** 
+        - **Flutter Version (`flutter --version`):** 
+        - **Flunner Version / Commit:** 
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console Logs / Screenshots
+      description: Paste relevant logs or drag-and-drop screenshots if applicable.

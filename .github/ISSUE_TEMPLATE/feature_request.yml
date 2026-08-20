@@ -1,0 +1,35 @@
+name: 💡 Feature Request
+description: Suggest an idea, enhancement, or new feature for Flunner.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement! We love hearing ideas from Flutter developers.
+  - type: input
+    id: title
+    attributes:
+      label: Feature Summary
+      description: A concise summary of the requested feature.
+      placeholder: e.g. Add custom environment variable profiles for launch configurations
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Motivation
+      description: Is your feature request related to a specific problem or workflow friction?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe what you would like Flunner to do.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative approaches or workarounds you have considered.
