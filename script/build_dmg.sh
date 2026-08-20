@@ -13,7 +13,11 @@ BUILD_DIR="$ROOT_DIR/.build/release"
 ENTITLEMENTS_FILE="$ROOT_DIR/Sources/Flunner/Flunner.entitlements"
 PROJECT_FILE="$ROOT_DIR/Flunner.xcodeproj"
 PROJECT_YML="$ROOT_DIR/project.yml"
-SIGNING_IDENTITY="${APPLE_SIGNING_IDENTITY:-"-"}" # default to ad-hoc signing
+
+# Auto-detect Developer ID Application certificate from Keychain if not explicitly set
+AUTO_DEV_ID=$(security find-identity -p codesigning -v 2>/dev/null | grep "Developer ID Application:" | head -n 1 | awk -F '"' '{print $2}' || true)
+SIGNING_IDENTITY="${APPLE_SIGNING_IDENTITY:-${AUTO_DEV_ID:-"-"}}"
+NOTARY_PROFILE="${NOTARIZATION_KEYCHAIN_PROFILE:-${NOTARY_PROFILE:-""}}"
 
 # Extract default version from project.yml or fallback to 1.0.0
 DEFAULT_VERSION="1.0.0"
@@ -217,19 +221,34 @@ cp "$VERSIONED_ZIP" "$CANONICAL_ZIP"
 # ------------------------------------------------------------------------------
 # 7. Optional Notarization (if Apple credentials are set)
 # ------------------------------------------------------------------------------
-if [ -n "${NOTARIZATION_APPLE_ID:-}" ] && [ -n "${NOTARIZATION_PASSWORD:-}" ] && [ -n "${NOTARIZATION_TEAM_ID:-}" ]; then
-  echo "==> Submitting DMG for Apple Notarization..."
+if [ -n "$NOTARY_PROFILE" ]; then
+  echo "==> Submitting DMG for Apple Notarization via keychain profile '$NOTARY_PROFILE'..."
+  xcrun notarytool submit "$VERSIONED_DMG" --keychain-profile "$NOTARY_PROFILE" --wait
+  echo "==> Stapling notarization ticket to DMG..."
+  xcrun stapler staple "$VERSIONED_DMG"
+  xcrun stapler staple "$CANONICAL_DMG"
+elif [ -n "${NOTARIZATION_KEY_FILE:-}" ] && [ -n "${NOTARIZATION_KEY_ID:-}" ] && [ -n "${NOTARIZATION_ISSUER_ID:-}" ]; then
+  echo "==> Submitting DMG for Apple Notarization via App Store Connect API Key..."
+  xcrun notarytool submit "$VERSIONED_DMG" \
+    --key "$NOTARIZATION_KEY_FILE" \
+    --key-id "$NOTARIZATION_KEY_ID" \
+    --issuer "$NOTARIZATION_ISSUER_ID" \
+    --wait
+  echo "==> Stapling notarization ticket to DMG..."
+  xcrun stapler staple "$VERSIONED_DMG"
+  xcrun stapler staple "$CANONICAL_DMG"
+elif [ -n "${NOTARIZATION_APPLE_ID:-}" ] && [ -n "${NOTARIZATION_PASSWORD:-}" ] && [ -n "${NOTARIZATION_TEAM_ID:-}" ]; then
+  echo "==> Submitting DMG for Apple Notarization via Apple ID credentials..."
   xcrun notarytool submit "$VERSIONED_DMG" \
     --apple-id "$NOTARIZATION_APPLE_ID" \
     --password "$NOTARIZATION_PASSWORD" \
     --team-id "$NOTARIZATION_TEAM_ID" \
     --wait
-
   echo "==> Stapling notarization ticket to DMG..."
   xcrun stapler staple "$VERSIONED_DMG"
   xcrun stapler staple "$CANONICAL_DMG"
 else
-  echo "==> Skipping Apple Notarization (set NOTARIZATION_APPLE_ID, NOTARIZATION_PASSWORD, NOTARIZATION_TEAM_ID to enable)."
+  echo "==> Skipping Apple Notarization (no active notary profile or credentials provided)."
 fi
 
 # ------------------------------------------------------------------------------
