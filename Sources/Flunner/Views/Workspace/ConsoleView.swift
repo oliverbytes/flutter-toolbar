@@ -18,6 +18,7 @@ struct ConsoleToolbar: View {
             compactToolbar
             narrowToolbar
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, WorkbenchSpacing.medium)
         .padding(.vertical, 2)
         .background(WorkbenchColor.surface)
@@ -28,58 +29,89 @@ struct ConsoleToolbar: View {
 
     private var regularToolbar: some View {
         HStack(spacing: WorkbenchSpacing.small) {
-            searchField.frame(width: 240)
+            toolbarLeadingContent(
+                searchMaxWidth: 240,
+                channelWidth: 200,
+                includeMaintenanceLabel: true
+            )
 
-            ForEach(LogEntryType.allCases, id: \.self) { type in
-                FilterChip(
-                    title: type.label,
-                    systemImage: type.systemImage,
-                    selected: viewModel.enabledLogTypes.contains(type)
-                ) {
-                    viewModel.toggleFilter(type)
-                }
-            }
+            Spacer(minLength: WorkbenchSpacing.small)
 
-            if viewModel.selectedLogChannel == .console {
-                FilterChip(
-                    title: "Flutter",
-                    systemImage: "bird",
-                    selected: viewModel.isFlutterConsoleFilterEnabled
-                ) {
-                    viewModel.toggleFlutterConsoleFilter()
-                }
-            }
-
-            channelPicker(width: 200)
-            maintenanceIndicator(includeLabel: true)
-
-            Spacer()
             trailingActions
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var compactToolbar: some View {
         HStack(spacing: WorkbenchSpacing.xs) {
-            searchField.frame(minWidth: 140, maxWidth: 220)
-            filtersMenu
-            channelPicker(width: 164)
-            maintenanceIndicator(includeLabel: false)
+            toolbarLeadingContent(
+                searchMaxWidth: 220,
+                channelWidth: 164,
+                includeMaintenanceLabel: false,
+                usesFilterMenu: true
+            )
 
-            Spacer(minLength: 0)
+            Spacer(minLength: WorkbenchSpacing.small)
+
             trailingActions
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var narrowToolbar: some View {
         HStack(spacing: WorkbenchSpacing.xs) {
-            searchField.frame(minWidth: 96, maxWidth: 160)
-            filtersMenu
-            channelPicker(width: 150)
-            maintenanceIndicator(includeLabel: false)
+            toolbarLeadingContent(
+                searchMaxWidth: 160,
+                channelWidth: 150,
+                includeMaintenanceLabel: false,
+                usesFilterMenu: true
+            )
 
-            Spacer(minLength: 0)
+            Spacer(minLength: WorkbenchSpacing.small)
+
             trailingActionsMenu
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func toolbarLeadingContent(
+        searchMaxWidth: CGFloat,
+        channelWidth: CGFloat,
+        includeMaintenanceLabel: Bool,
+        usesFilterMenu: Bool = false
+    ) -> some View {
+        HStack(spacing: usesFilterMenu ? WorkbenchSpacing.xs : WorkbenchSpacing.small) {
+            searchField.frame(minWidth: usesFilterMenu ? 96 : 140, maxWidth: searchMaxWidth)
+
+            if usesFilterMenu {
+                filtersMenu
+            } else {
+                ForEach(LogEntryType.allCases, id: \.self) { type in
+                    FilterChip(
+                        title: type.label,
+                        systemImage: type.systemImage,
+                        selected: viewModel.enabledLogTypes.contains(type)
+                    ) {
+                        viewModel.toggleFilter(type)
+                    }
+                }
+
+                if viewModel.selectedLogChannel == .console {
+                    FilterChip(
+                        title: "Flutter",
+                        systemImage: "bird",
+                        selected: viewModel.isFlutterConsoleFilterEnabled
+                    ) {
+                        viewModel.toggleFlutterConsoleFilter()
+                    }
+                }
+            }
+
+            channelPicker(width: channelWidth)
+            maintenanceIndicator(includeLabel: includeMaintenanceLabel)
+        }
+        .layoutPriority(0)
     }
 
     private func channelPicker(width: CGFloat) -> some View {
@@ -225,6 +257,9 @@ struct ConsoleToolbar: View {
 
             flutterCLIMenu
         }
+        .layoutPriority(1)
+        .fixedSize(horizontal: true, vertical: false)
+        .padding(.trailing, WorkbenchSpacing.xs)
     }
 
     @ViewBuilder
@@ -243,13 +278,17 @@ struct ConsoleToolbar: View {
                     }
                 }
             } label: {
-                Label("Flutter CLI", systemImage: "terminal.fill")
-                    .labelStyle(.iconOnly)
-                    .frame(width: 44, height: 44)
-                    .padding(.trailing, WorkbenchSpacing.compact)
+                HStack(spacing: 2) {
+                    Image(systemName: "terminal.fill")
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 9, weight: .bold))
+                }
+                .foregroundStyle(WorkbenchColor.textSecondary)
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
             }
-            .menuIndicator(.visible)
             .menuStyle(.borderlessButton)
+            .fixedSize()
             .workbenchTooltip("Run Flutter CLI command", placement: .below)
             .accessibilityLabel("Flutter CLI Commands")
         }
@@ -305,6 +344,9 @@ struct ConsoleToolbar: View {
                 .frame(width: 44, height: 44)
         }
         .menuStyle(.borderlessButton)
+        .fixedSize()
+        .layoutPriority(1)
+        .padding(.trailing, WorkbenchSpacing.xs)
         .workbenchTooltip("More \(viewModel.selectedLogChannel.label.lowercased()) actions", placement: .below)
         .accessibilityLabel("Log Actions")
     }
