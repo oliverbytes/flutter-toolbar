@@ -1,6 +1,6 @@
 cask "flunner" do
   version "1.0.0"
-  sha256 "b2f0f2001234620bd85767efa98e2ecda8ce436b2e90863445c578dfa0bdd505"
+  sha256 "2d557d4bb8ce2db03f2d92db9451b2b163eeea273fe56d65d3084117a35b0edf"
 
   url "https://github.com/stackwares/flunner/releases/download/v#{version}/Flunner.dmg"
   name "Flunner"

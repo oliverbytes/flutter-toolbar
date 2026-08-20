@@ -5,10 +5,18 @@
 ### *A focused, native macOS workbench for the Flutter run–observe–reload loop.*
 
 [![CI](https://github.com/stackwares/flunner/actions/workflows/ci.yml/badge.svg)](https://github.com/stackwares/flunner/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/stackwares/flunner?color=2ea44f&logo=github)](https://github.com/stackwares/flunner/releases/latest)
 [![macOS](https://img.shields.io/badge/macOS-15.0%2B%20Sequoia-black?logo=apple&logoColor=white)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-5.9%2B-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![Flutter](https://img.shields.io/badge/Flutter-3.x%2B-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+<br/>
+
+<p align="center">
+  <img src="assets/screenshots/workspace-dark.png#gh-dark-mode-only" alt="Flunner Live Workspace (Dark)" width="850">
+  <img src="assets/screenshots/workspace-light.png#gh-light-mode-only" alt="Flunner Live Workspace (Light)" width="850">
+</p>
 
 </div>
 
