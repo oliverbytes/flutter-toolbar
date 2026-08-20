@@ -197,14 +197,10 @@ hdiutil create \
   -format UDZO \
   "$VERSIONED_DMG"
 
-# Also copy/link canonical Flunner.dmg
-cp "$VERSIONED_DMG" "$CANONICAL_DMG"
-
 # Code sign the DMG if signing identity is available and not ad-hoc
 if [ "$SIGNING_IDENTITY" != "-" ]; then
   echo "==> Signing .dmg image..."
   codesign --force --sign "$SIGNING_IDENTITY" --timestamp "$VERSIONED_DMG" || true
-  codesign --force --sign "$SIGNING_IDENTITY" --timestamp "$CANONICAL_DMG" || true
 fi
 
 # ------------------------------------------------------------------------------
@@ -216,7 +212,6 @@ VERSIONED_ZIP="$OUTPUT_DIR/$ZIP_NAME"
 
 echo "==> Creating .zip archive..."
 (cd "$BUILD_DIR/Build/Products/Release" && ditto -c -k --keepParent "$APP_NAME.app" "$VERSIONED_ZIP")
-cp "$VERSIONED_ZIP" "$CANONICAL_ZIP"
 
 # ------------------------------------------------------------------------------
 # 7. Optional Notarization (if Apple credentials are set)
@@ -226,7 +221,6 @@ if [ -n "$NOTARY_PROFILE" ]; then
   xcrun notarytool submit "$VERSIONED_DMG" --keychain-profile "$NOTARY_PROFILE" --wait
   echo "==> Stapling notarization ticket to DMG..."
   xcrun stapler staple "$VERSIONED_DMG"
-  xcrun stapler staple "$CANONICAL_DMG"
 elif [ -n "${NOTARIZATION_KEY_FILE:-}" ] && [ -n "${NOTARIZATION_KEY_ID:-}" ] && [ -n "${NOTARIZATION_ISSUER_ID:-}" ]; then
   echo "==> Submitting DMG for Apple Notarization via App Store Connect API Key..."
   xcrun notarytool submit "$VERSIONED_DMG" \
@@ -236,7 +230,6 @@ elif [ -n "${NOTARIZATION_KEY_FILE:-}" ] && [ -n "${NOTARIZATION_KEY_ID:-}" ] &&
     --wait
   echo "==> Stapling notarization ticket to DMG..."
   xcrun stapler staple "$VERSIONED_DMG"
-  xcrun stapler staple "$CANONICAL_DMG"
 elif [ -n "${NOTARIZATION_APPLE_ID:-}" ] && [ -n "${NOTARIZATION_PASSWORD:-}" ] && [ -n "${NOTARIZATION_TEAM_ID:-}" ]; then
   echo "==> Submitting DMG for Apple Notarization via Apple ID credentials..."
   xcrun notarytool submit "$VERSIONED_DMG" \
@@ -246,10 +239,13 @@ elif [ -n "${NOTARIZATION_APPLE_ID:-}" ] && [ -n "${NOTARIZATION_PASSWORD:-}" ] 
     --wait
   echo "==> Stapling notarization ticket to DMG..."
   xcrun stapler staple "$VERSIONED_DMG"
-  xcrun stapler staple "$CANONICAL_DMG"
 else
   echo "==> Skipping Apple Notarization (no active notary profile or credentials provided)."
 fi
+
+# Copy canonical release files from notarized/stapled versions
+cp -f "$VERSIONED_DMG" "$CANONICAL_DMG"
+cp -f "$VERSIONED_ZIP" "$CANONICAL_ZIP"
 
 # ------------------------------------------------------------------------------
 # 8. Generate SHA256 Checksums
