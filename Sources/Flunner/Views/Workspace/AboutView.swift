@@ -50,12 +50,8 @@ struct AboutView: View {
                 }
                 .padding(WorkbenchSpacing.large)
             }
-
-            Divider()
-
-            footer
         }
-        .frame(width: 520, height: 680)
+        .frame(width: 520, height: 710)
         .background(WorkbenchColor.background)
         .tint(WorkbenchColor.accent)
     }
@@ -76,6 +72,7 @@ struct AboutView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(.cancelAction)
             .accessibilityLabel("Close About Dialog")
         }
         .padding(.horizontal, WorkbenchSpacing.large)
@@ -356,40 +353,32 @@ struct AboutView: View {
         }
     }
 
-    // MARK: - Legal Card
+    // MARK: - Legal & Licensing
 
     private var legalCard: some View {
         VStack(spacing: WorkbenchSpacing.xs) {
-            Text("Released under the MIT License")
+            HStack(spacing: 6) {
+                Text("Released under the MIT License")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(WorkbenchColor.textSecondary)
+
+                Text("•")
+                    .font(.caption)
+                    .foregroundStyle(WorkbenchColor.textSecondary.opacity(0.5))
+
+                Button("View License") {
+                    viewModel.openLink(URL(string: "https://github.com/stackwares/flunner/blob/main/LICENSE")!)
+                }
                 .font(.caption)
-                .fontWeight(.medium)
-                .foregroundStyle(WorkbenchColor.textSecondary)
+                .buttonStyle(.link)
+            }
 
             Text("Copyright © 2026 Stackwares. All rights reserved.")
-                .font(.system(size: 10))
+                .font(.system(size: 11))
                 .foregroundStyle(WorkbenchColor.textSecondary.opacity(0.8))
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, WorkbenchSpacing.small)
-    }
-
-    // MARK: - Footer
-
-    private var footer: some View {
-        HStack {
-            Button("View License") {
-                viewModel.openLink(URL(string: "https://github.com/stackwares/flunner/blob/main/LICENSE")!)
-            }
-            .font(.caption)
-            .buttonStyle(.link)
-
-            Spacer()
-
-            Button("Done", action: onDismiss)
-                .buttonStyle(WorkbenchPrimaryButtonStyle())
-                .keyboardShortcut(.defaultAction)
-        }
-        .padding(.horizontal, WorkbenchSpacing.large)
-        .padding(.vertical, WorkbenchSpacing.compact)
+        .padding(.vertical, WorkbenchSpacing.small)
     }
 }
