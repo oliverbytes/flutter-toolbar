@@ -145,7 +145,9 @@ struct AboutView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(WorkbenchColor.accent)
 
-            HStack(alignment: .center, spacing: WorkbenchSpacing.medium) {
+            HStack(alignment: .center, spacing: WorkbenchSpacing.compact) {
+                authorAvatar
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Oliver Martinez")
                         .font(.headline)
@@ -209,6 +211,28 @@ struct AboutView: View {
                 RoundedRectangle(cornerRadius: WorkbenchRadius.medium, style: .continuous)
                     .stroke(WorkbenchColor.divider, lineWidth: 1)
             )
+        }
+    }
+
+    @ViewBuilder
+    private var authorAvatar: some View {
+        if let nsImage = NSImage(named: "OliverMartinez") {
+            Image(nsImage: nsImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 42, height: 42)
+                .clipShape(Circle())
+                .overlay(
+                    Circle()
+                        .stroke(WorkbenchColor.accent.opacity(0.35), lineWidth: 1.5)
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 3, x: 0, y: 1)
+        } else {
+            Image(systemName: "person.crop.circle.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 42, height: 42)
+                .foregroundStyle(WorkbenchColor.accent)
         }
     }
 
