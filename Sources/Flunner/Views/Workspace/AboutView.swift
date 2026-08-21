@@ -120,11 +120,18 @@ struct AboutView: View {
             .background(WorkbenchColor.accentSoft)
             .clipShape(Capsule())
 
-            Text("A focused, native macOS workbench for the Flutter run–observe–reload loop.")
+            Text("The AI-Agent Sidekick & Native macOS Workbench for Flutter.")
                 .font(.subheadline)
-                .foregroundStyle(WorkbenchColor.textSecondary)
+                .fontWeight(.medium)
+                .foregroundStyle(WorkbenchColor.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, WorkbenchSpacing.medium)
+
+            Text("Engineered to pair alongside AI coding agents and modern editors, giving you instant runtime control, log diagnostics, and device orchestration.")
+                .font(.caption)
+                .foregroundStyle(WorkbenchColor.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, WorkbenchSpacing.large)
         }
         .padding(.top, WorkbenchSpacing.small)
     }

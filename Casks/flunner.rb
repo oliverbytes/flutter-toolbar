@@ -4,7 +4,7 @@ cask "flunner" do
 
   url "https://github.com/stackwares/flunner/releases/download/v#{version}/Flunner.dmg"
   name "Flunner"
-  desc "Workbench for the Flutter run-observe-reload loop"
+  desc "Native macOS workbench and AI-agent sidekick for Flutter"
   homepage "https://github.com/stackwares/flunner"
 
   depends_on macos: :sequoia

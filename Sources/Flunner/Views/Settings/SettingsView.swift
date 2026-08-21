@@ -34,10 +34,10 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Flunner")
                                 .font(.headline)
-                            Text("Version \(appVersion) (\(buildNumber))")
+                            Text("Version \(appVersion) (\(buildNumber)) • The AI-Agent Sidekick")
                                 .workbenchFont(.body)
                                 .foregroundStyle(WorkbenchColor.textSecondary)
-                            Text("Crafted by Oliver Martinez (@oliverbytes)")
+                            Text("Crafted with ❤️ by Oliver Martinez (@oliverbytes)")
                                 .workbenchFont(.caption)
                                 .foregroundStyle(WorkbenchColor.accent)
                         }

@@ -70,7 +70,7 @@ struct OnboardingView: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Flunner")
                         .font(.headline)
-                    Text("Flutter workspace companion")
+                    Text("The AI-Agent Sidekick for Flutter")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -81,6 +81,17 @@ struct OnboardingView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
+
+                if viewModel.projectPath != nil {
+                    Button(action: onProjectOpened) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.cancelAction)
+                    .accessibilityLabel("Close Onboarding")
+                }
             }
             .padding(.horizontal, WorkbenchSpacing.large)
             .frame(height: 64)
@@ -123,11 +134,11 @@ struct OnboardingView: View {
                     .accessibilityHint("Go to the next page")
                 } else {
                     Button("Open Flutter Project…", action: viewModel.chooseProject)
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                        .keyboardShortcut(.defaultAction)
-                        .tint(WorkbenchColor.accent)
-                        .accessibilityHint("Open a file picker to choose a Flutter project folder")
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+                    .keyboardShortcut(.defaultAction)
+                    .tint(WorkbenchColor.accent)
+                    .accessibilityHint("Open a file picker to choose a Flutter project folder")
                 }
             }
             .frame(height: 62)
@@ -153,26 +164,26 @@ struct OnboardingView: View {
 
     private var page1: some View {
         OnboardingPage(
-            symbol: "app.badge.checkmark.fill",
-            stepLabel: "WELCOME TO FLUNNER",
-            headline: "Your Agent's Sidekick",
-            bodyText: "Give your coding agent runtime control while keeping every important action close at hand.",
+            symbol: "bolt.badge.automatic.fill",
+            stepLabel: "AI-FIRST COMPANION",
+            headline: "Your Agent's Runtime Sidekick",
+            bodyText: "While your AI coding agent writes and refactors code, Flunner commands the runtime: instant hot-reloads, device orchestration, live log streams, and Git checkpoints.",
             highlights: [
-                "Run and stop Flutter apps instantly",
-                "Stay in control without extra prompts",
+                "Pairs seamlessly with Cursor, Claude, Windsurf & Copilot",
+                "Instant hot-reload, restart, and state observation",
             ]
         )
     }
 
     private var page2: some View {
         OnboardingPage(
-            symbol: "ant.fill",
-            stepLabel: "DEBUG FASTER",
-            headline: "Instant Debugging",
-            bodyText: "Inspect, reload, and troubleshoot your app without interrupting the agent's flow.",
+            symbol: "waveform.and.magnifyingglass",
+            stepLabel: "INSTANT OBSERVABILITY",
+            headline: "Live Diagnostics for AI Loops",
+            bodyText: "Inspect exceptions, filter logs, and copy structured diagnostic dumps in one click to feed accurate runtime context back into your agent's prompt.",
             highlights: [
-                "Hot reload and hot restart",
-                "Logs, widget tree, and DevTools",
+                "High-throughput log filtering & regex search",
+                "One-click diagnostics export for agent prompts",
             ]
         )
     }
@@ -180,12 +191,12 @@ struct OnboardingView: View {
     private var page3: some View {
         OnboardingPage(
             symbol: "square.grid.3x3.fill",
-            stepLabel: "ONE WORKSPACE",
+            stepLabel: "FOCUSED WORKBENCH",
             headline: "Everything in Reach",
-            bodyText: "Bring the tools you use every day into one focused, native Mac workspace.",
+            bodyText: "Keep interactive PTY terminal tabs, Git commits, and device targets in one calm, native macOS workbench without IDE clutter.",
             highlights: [
-                "Terminal and source control",
-                "Devices and launch configurations",
+                "Built-in PTY terminal tabs for CLI tools",
+                "Native Git staging & commit checkpoints",
             ]
         )
     }
@@ -193,12 +204,12 @@ struct OnboardingView: View {
     private var page4: some View {
         OnboardingPage(
             symbol: "folder.badge.plus",
-            stepLabel: "READY TO GO",
+            stepLabel: "READY TO BUILD",
             headline: "Open a Flutter Project",
-            bodyText: "Choose a project folder to begin. Flunner remembers your workspace and restores it on your next launch.",
+            bodyText: "Choose any Flutter project folder to begin. Flunner validates your environment, detects FVM configurations, and restores your workspace automatically.",
             highlights: [
-                "Validates your Flutter project",
-                "Restores recent projects automatically",
+                "Validates Flutter project & FVM setup",
+                "Restores workspace state automatically",
             ]
         )
     }
@@ -213,7 +224,11 @@ struct OnboardingView: View {
     }
 
     private func skip() {
-        setPage(totalPages - 1)
+        if viewModel.projectPath != nil {
+            onProjectOpened()
+        } else {
+            setPage(totalPages - 1)
+        }
     }
 
     private func goBack() {

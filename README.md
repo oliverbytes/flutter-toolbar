@@ -2,7 +2,7 @@
 
 # Flunner
 
-### *A focused, native macOS workbench for the Flutter run–observe–reload loop.*
+### *The AI-Agent Sidekick & Native macOS Workbench for Flutter.*
 
 [![CI](https://github.com/stackwares/flunner/actions/workflows/ci.yml/badge.svg)](https://github.com/stackwares/flunner/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/stackwares/flunner?color=2ea44f&logo=github)](https://github.com/stackwares/flunner/releases/latest)
@@ -24,9 +24,21 @@
 
 ## ⚡ Overview
 
-**Flunner** is a dedicated developer workbench crafted specifically for macOS. Instead of wrestling with bulky IDE tabs or terminal juggling, Flunner gives Flutter developers a calm, fast, and tactile instrument designed around the core loop: **build, run, observe logs, hot reload, and debug**.
+**Flunner** is the dedicated developer workbench and **runtime sidekick for AI coding agents** on macOS. 
 
-Whether you're developing solo or pairing with AI coding agents, Flunner gives you instant, keyboard-driven runtime control over what gets built.
+While your AI coding assistant (Cursor, Claude Code, Windsurf, GitHub Copilot, Roo Code, Aider, Antigravity) generates code and creates diffs, Flunner lives right alongside as your calm, hyper-responsive runtime cockpit—giving you instant hot-reloads, device orchestration, live diagnostic streams, PTY terminal tasks, and Git checkpoints with zero IDE clutter.
+
+> **"While your AI agent writes the code, Flunner commands the runtime."**
+
+---
+
+## 🤖 Built for the AI Coding Era
+
+* ⚡️ **Zero-Friction Hot Reload & Restart** — Instantly test agent-generated UI and logic modifications (`r` / `R`) with sub-second response times without ever leaving your editor.
+* 🪵 **High-Density Diagnostics for Prompts** — Stream structured logs with multi-level filtering (`Info`, `Error`, `Command`), regex search, and 1-click diagnostic export to feed crash dumps directly back into AI prompts.
+* 🌿 **Atomic Git Checkpoints** — Built-in native Git sheet to inspect diffs, stage files, and commit agent iterations before running further prompts.
+* 📱 **Multi-Device Target Orchestration** — Effortlessly launch and switch between iOS Simulators, Android Virtual Devices (AVDs), macOS Desktop, and Chrome Web targets.
+* 🪶 **Calm, Ultra-Lightweight Footprint** — 100% native Swift & SwiftUI architecture with negligible RAM and CPU usage, saving your machine's full power for local LLMs, compilers, and agents.
 
 ---
 
@@ -169,5 +181,5 @@ Flunner is open-source software licensed under the [MIT License](LICENSE).
 ---
 
 <div align="center">
-Made with ❤️ by <a href="https://github.com/stackwares">Stackwares</a>
+Crafted with ❤️ by <a href="https://x.com/oliverbytes">Oliver Martinez</a> & <a href="https://github.com/stackwares">Stackwares</a>
 </div>
