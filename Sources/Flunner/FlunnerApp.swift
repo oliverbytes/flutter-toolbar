@@ -59,6 +59,11 @@ struct FlunnerApp: App {
         .defaultSize(width: 1120, height: 1440)
         .windowToolbarStyle(.unified)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About Flunner") {
+                    NotificationCenter.default.post(name: .showAboutSheet, object: nil)
+                }
+            }
             CommandGroup(replacing: .newItem) {
                 Button("Open Flutter Project…") {
                     viewModel.chooseProject()
@@ -74,6 +79,9 @@ struct FlunnerApp: App {
                 appFontSize: $appFontSize
             )
             CommandGroup(replacing: .help) {
+                Button("About Flunner") {
+                    NotificationCenter.default.post(name: .showAboutSheet, object: nil)
+                }
                 Button("Welcome to Flunner (Onboarding)…") {
                     NotificationCenter.default.post(name: .showOnboardingSheet, object: nil)
                 }

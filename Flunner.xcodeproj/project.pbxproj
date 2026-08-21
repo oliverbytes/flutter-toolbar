@@ -23,6 +23,7 @@
 		55CDC2601BBF94B56FABA221 /* FlutterSDKInfoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 421B384B09B31834F98E11F0 /* FlutterSDKInfoService.swift */; };
 		56A2A0A2EA32E8088C109769 /* DaemonMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C6D03086D9476BAEF8B09DF /* DaemonMessage.swift */; };
 		5B85D07961843E9BB4F4D25B /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E6D73160CD5A1DAE5487C75 /* DesignTokens.swift */; };
+		5BFFEA47A19A53F645423D75 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A25E3D7EA2AFD9481AE36DAF /* AboutView.swift */; };
 		63C3CE994D3EC4266304CA99 /* UserDefaultsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF8761236493770A9DBB7B24 /* UserDefaultsStore.swift */; };
 		6BA606DB882580263ADC4D48 /* LiveWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0811CF90AC2511A0BC9AF5 /* LiveWorkspaceView.swift */; };
 		771048CD8CE4B6AAD2A59ECD /* MultiProjectRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5509A7C667F6C2E4F2B5DD87 /* MultiProjectRunnerTests.swift */; };
@@ -30,7 +31,6 @@
 		80694B787B183300FD4E9D9B /* LogEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6B766316CB6890D81175737 /* LogEntry.swift */; };
 		832A0509C3D255141A739315 /* TerminalWorkspaceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88629A191CBEFE0E31624762 /* TerminalWorkspaceManager.swift */; };
 		879EBE3989F3CE14FBA31C74 /* WorkspaceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E23D2B55BC3606A7746134F7 /* WorkspaceStore.swift */; };
-		8C6F4A5B3D2E1F7098A7B6C5 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5E4D3C2A1F0987654321AB /* OnboardingView.swift */; };
 		887ACC5B2ABF1F8F360A2594 /* FlutterSDKInfoSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E825B0FFF120A25E110CE1E /* FlutterSDKInfoSheet.swift */; };
 		A17041DD506336F113CA9E4D /* SourceControlModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 205CF20D9CFE53EE6360D0DD /* SourceControlModels.swift */; };
 		A175892E1CFCCEA344AD45AB /* ProjectMaintenanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14DAAC15D6C2B042A5B75D60 /* ProjectMaintenanceTests.swift */; };
@@ -41,6 +41,7 @@
 		B3C370424BF74A6FF49DDFC2 /* KeyboardShortcutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99BED30F77092816643EC4A1 /* KeyboardShortcutStore.swift */; };
 		B43DD55644EE497B9B2A327C /* KeyboardShortcut.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858C0E5AEC02E22069A70BF4 /* KeyboardShortcut.swift */; };
 		B4EBDEC4AD52C1B50C466586 /* LegacySidebarToolbarItemCleanup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D50F68ED0BA13F249B2938A6 /* LegacySidebarToolbarItemCleanup.swift */; };
+		B5A9191E4C46B17B967CDD9A /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D39B0E9AB9BAA777D6FFAF8C /* OnboardingView.swift */; };
 		B7E028CD42574038696D1006 /* FlutterSDKInfoPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CD63202D05266AC30668A0 /* FlutterSDKInfoPopover.swift */; };
 		BBB85E8CB0F02F9CBD4A29DB /* WorkspaceProjectIsolationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5063CDFE947178B0D3267E56 /* WorkspaceProjectIsolationTests.swift */; };
 		BC175BDF084636C8A0074B4D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 209DBFFB16AEA9EDDE7BE48C /* Assets.xcassets */; };
@@ -95,7 +96,6 @@
 		61AF86561B1DB23DCD56114D /* WorkspaceViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceViewModel.swift; sourceTree = "<group>"; };
 		6A0811CF90AC2511A0BC9AF5 /* LiveWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveWorkspaceView.swift; sourceTree = "<group>"; };
 		73C1DADAF332ED9BAF6E9640 /* Flunner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Flunner.entitlements; sourceTree = "<group>"; };
-		7B5E4D3C2A1F0987654321AB /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		7BBFDDC4D67135CAB628B526 /* Flunner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Flunner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8106F3815BFA32C1DD4CEB2B /* LaunchConfigEditorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchConfigEditorTests.swift; sourceTree = "<group>"; };
 		858C0E5AEC02E22069A70BF4 /* KeyboardShortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcut.swift; sourceTree = "<group>"; };
@@ -104,6 +104,7 @@
 		90E48455E68396C012678DD2 /* ThemeModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeModeTests.swift; sourceTree = "<group>"; };
 		954BC04D2C6A06038C55D3A3 /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
 		99BED30F77092816643EC4A1 /* KeyboardShortcutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutStore.swift; sourceTree = "<group>"; };
+		A25E3D7EA2AFD9481AE36DAF /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		A3BB91A1C321D266DD2CF0F0 /* LaunchConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchConfig.swift; sourceTree = "<group>"; };
 		BC7A4ECD848BF359394D0EA3 /* TerminalPaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalPaneView.swift; sourceTree = "<group>"; };
 		BD64FB7B6F07FE8A35C0F2DE /* WidgetPreviewerLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetPreviewerLauncher.swift; sourceTree = "<group>"; };
@@ -112,6 +113,7 @@
 		C2DDEF56DFC39AC76500A564 /* RunnerMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerMessage.swift; sourceTree = "<group>"; };
 		C5821BEC3D6B6E37B761A9D1 /* DevToolsLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevToolsLauncher.swift; sourceTree = "<group>"; };
 		D087B9B774F8B22C785FDFAF /* WorkspaceStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceStoreTests.swift; sourceTree = "<group>"; };
+		D39B0E9AB9BAA777D6FFAF8C /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		D3EB542B0E60115C8EBDFAAD /* WorkbenchSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkbenchSidebar.swift; sourceTree = "<group>"; };
 		D50F68ED0BA13F249B2938A6 /* LegacySidebarToolbarItemCleanup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacySidebarToolbarItemCleanup.swift; sourceTree = "<group>"; };
 		D6B766316CB6890D81175737 /* LogEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogEntry.swift; sourceTree = "<group>"; };
@@ -230,10 +232,11 @@
 		70A57C76726EA530150EA021 /* Workspace */ = {
 			isa = PBXGroup;
 			children = (
+				A25E3D7EA2AFD9481AE36DAF /* AboutView.swift */,
 				E09159A0A72D7AD960144DBE /* ConsoleView.swift */,
 				10B7CC54E8CB2D0CA7BDE8D8 /* LaunchConfigEditorView.swift */,
 				6A0811CF90AC2511A0BC9AF5 /* LiveWorkspaceView.swift */,
-				7B5E4D3C2A1F0987654321AB /* OnboardingView.swift */,
+				D39B0E9AB9BAA777D6FFAF8C /* OnboardingView.swift */,
 				BC7A4ECD848BF359394D0EA3 /* TerminalPaneView.swift */,
 				D3EB542B0E60115C8EBDFAAD /* WorkbenchSidebar.swift */,
 			);
@@ -401,6 +404,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5BFFEA47A19A53F645423D75 /* AboutView.swift in Sources */,
 				2EDBFA4FBD5E8A463A5060CD /* AppState.swift in Sources */,
 				C1BD9BF454206EB8AFE1E3A1 /* ConsoleView.swift in Sources */,
 				F7574472AE0C5A1F1AA4583E /* ContentView.swift in Sources */,
@@ -425,7 +429,7 @@
 				B4EBDEC4AD52C1B50C466586 /* LegacySidebarToolbarItemCleanup.swift in Sources */,
 				6BA606DB882580263ADC4D48 /* LiveWorkspaceView.swift in Sources */,
 				80694B787B183300FD4E9D9B /* LogEntry.swift in Sources */,
-				8C6F4A5B3D2E1F7098A7B6C5 /* OnboardingView.swift in Sources */,
+				B5A9191E4C46B17B967CDD9A /* OnboardingView.swift in Sources */,
 				ED9B74BF9CBA9C8F99D4337A /* RunnerMessage.swift in Sources */,
 				DFFA4FEA068669A80F0C8BBC /* SettingsView.swift in Sources */,
 				A17041DD506336F113CA9E4D /* SourceControlModels.swift in Sources */,

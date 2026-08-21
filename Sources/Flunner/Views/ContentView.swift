@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var isSourceControlSheetPresented = false
     @State private var showSDKInfoPopover = false
     @State private var showOnboarding = false
+    @State private var showAboutSheet = false
     @AppStorage(PreferenceKeys.themeMode) private var themeMode = ThemeMode.system.rawValue
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
@@ -108,6 +109,14 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .showOnboardingSheet)) { _ in
             showOnboarding = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showAboutSheet)) { _ in
+            showAboutSheet = true
+        }
+        .sheet(isPresented: $showAboutSheet) {
+            AboutView(viewModel: viewModel) {
+                showAboutSheet = false
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .showSourceControlSheet)) { _ in
             isSourceControlSheetPresented = true

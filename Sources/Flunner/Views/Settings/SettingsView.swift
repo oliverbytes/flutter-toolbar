@@ -19,7 +19,7 @@ struct SettingsView: View {
 
     private var copyright: String {
         Bundle.main.infoDictionary?["NSHumanReadableCopyright"] as? String
-            ?? "Copyright © 2025 Flunner. All rights reserved."
+            ?? "Copyright © 2026 Stackwares. All rights reserved."
     }
 
     var body: some View {
@@ -29,18 +29,26 @@ struct SettingsView: View {
                     HStack(spacing: WorkbenchSpacing.medium) {
                         Image(nsImage: NSApp.applicationIconImage)
                             .resizable()
-                            .frame(width: 64, height: 64)
+                            .frame(width: 56, height: 56)
 
-                        VStack(alignment: .leading, spacing: WorkbenchSpacing.xs) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text("Flunner")
                                 .font(.headline)
                             Text("Version \(appVersion) (\(buildNumber))")
                                 .workbenchFont(.body)
                                 .foregroundStyle(WorkbenchColor.textSecondary)
-                            Text(copyright)
+                            Text("Crafted by Oliver Martinez (@oliverbytes)")
                                 .workbenchFont(.caption)
-                                .foregroundStyle(WorkbenchColor.textSecondary)
+                                .foregroundStyle(WorkbenchColor.accent)
                         }
+
+                        Spacer()
+
+                        Button("About & Credits…") {
+                            NotificationCenter.default.post(name: .showAboutSheet, object: nil)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
                     }
                     .padding(.vertical, WorkbenchSpacing.xs)
                 }
