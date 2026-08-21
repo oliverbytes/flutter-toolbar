@@ -175,7 +175,7 @@ struct AboutView: View {
                     .help("Follow Oliver Martinez on X (@oliverbytes)")
 
                     Button {
-                        viewModel.openLink(URL(string: "https://github.com/nemoryoliver")!)
+                        viewModel.openLink(URL(string: "https://github.com/oliverbytes")!)
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "curlybraces")
